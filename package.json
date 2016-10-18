@@ -1,0 +1,19 @@
+{
+  "name": "hgjs_build",
+  "version": "0.0.1",
+  "scripts": {
+    "pre-build": "npm run clean && npm run distPackageJson",
+    "build": "npm run pre-build && babel src -d dist",
+    "watch": "npm run pre-build && babel src -d dist --watch",
+    "clean": "rimraf dist && mkdir dist",
+    "distPackageJson": "cp src/package.json dist/package.json"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.16.0",
+    "babel-plugin-module-resolver": "^2.2.0",
+    "babel-preset-anjianshi-react-ie": "^0.0.2",
+    "eslint": "^3.4.0",
+    "eslint-config-anjianshi-react-native": "^0.0.2",
+    "rimraf": "^2.5.4"
+  }
+}
