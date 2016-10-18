@@ -1,3 +1,9 @@
 {
-    "presets": ["anjianshi-react-ie"]
+    "presets": ["anjianshi-react-ie"],
+
+    "plugins": [
+        ["module-resolver", {
+            "root": ["./src"]
+        }]
+    ]
 }
