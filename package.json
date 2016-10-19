@@ -15,7 +15,7 @@
     "babel-plugin-module-resolver": "^2.2.0",
     "babel-preset-anjianshi-react-ie": "^0.0.2",
     "eslint": "^3.4.0",
-    "eslint-config-anjianshi-react-native": "^0.0.3",
+    "eslint-config-anjianshi-react-native": "^0.0.4",
     "rimraf": "^2.5.4"
   }
 }
