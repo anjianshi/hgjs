@@ -6,6 +6,7 @@
     "author": "anjianshi <anjianshi@gmail.com>",
     "user": "anjianshi",
     "dependencies": {
+        "babel-polyfill": "^6.16.0",
         "bluebird": "^3.4.6",
         "jquery-param": "^0.2.0",
         "lodash": "^4.16.4",

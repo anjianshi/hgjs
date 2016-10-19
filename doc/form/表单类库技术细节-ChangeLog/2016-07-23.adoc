@@ -1,0 +1,242 @@
+= Form 改进（2016-02-04）
+:toc:
+
+
+== 用 validateDelay 取代 validateWhen
+
+目前 Form 中的 Field validateWhen 选项是一个定义得很不准确的选项。 +
+它的两个可选值：changed 和 blurred 并没有正确地表达出它的行为是怎样的。
+
+* 先说 changed，实际上 validateWhen=changed 时，并不是一 onChange 就进行验证，而是先等待一段时间才执行验证，并且如果在等待的时间到来前先发生了 onBlur， +
+  那么会在 onBlur 时立刻进行验证。
+* blurred 也是，并不代表发生 onBlur 时就一定会进行验证，得是字段值发生过变化才会进行验证。
+
+这样模糊、不准确的定义很容易带来误解。 +
+甚至还因此有过是不是就不应该有 blurred 这么一个 validateWhen 的可选项，等一系列乱七八糟不明就里的思考。 +
+这其中倒是有一点想法还有点意义：
+
+ 可不可以让所有字段都走同一个验证模式，即之前的 changed 模式。
+ 不再支持 blurred 验证模式，即不会因 changed 触发验证，总是在 onBlur 时进行验证的模式。因为这种模式用处不大。
+ 这样可以简化验证行为。
+
+首先，虽然可以这样做，但是完全没有必要。做了也没有任何好处。 +
+另外，其实这个是不可能完全限制住的，使用者把 validateDelay 设成 100 年，那不也跟只在 onBlur 时进行验证一个效果吗？ +
+还有一点，这个想法本身也有问题：“可不可以让所有字段都走同一个验证模式”。 +
+它们本身就是走的同一个验证模式，并没有分出 changed 和 blurred 两条路线，因为 changed 模式本身也是要在 blur 时进行验证的啊。
+
+为了让对验证时机的控制变得更清晰，这里进行一下调整，不再人为地定义 changed / blurred 两种验证时机，明确地表明让所有 Field 都走同一个流程： +
+在 onChange 后经过一定时延触发验证；如果到了 onBlur 时还没有触发过验证，那就强制触发一次验证。
+
+然后改为通过 validateDelay 来控制上面的时延：
+....
+0           代表没有时延，一发生 onChange，立刻进行验证
+-1          代表无限长的时延，实际效果就是只有等到 onBlur 才会触发验证，和原来定义的 validateWhen=blurred 一个效果
+普通数字     则是正常情况，在一定时延后触发验证
+....
+
+这样一来，Field 也不用再提供 validateWhen 选项了。 +
+并且，onChange（changed）、onBlur（blurred） 这两个概念也更清晰了。它们不再代表两种执行验证的时机，它们只是 input 上可能发生的两个事件的名称。
+
+=== 不再支持 validateWhen=submit 这种验证时机
+这个选项对熟练用户来说，还是有点用的。但现状时大部分人并不熟练，所以目前没有意义。
+
+''''
+
+
+== Field value 新设计
+
+Field 的 value 的意义发生变化。之前它的定义和作用和值的类型是很不清晰的：有时是未经处理的字符串，有时是经过了格式化但不知道是否合法的值（执行异步验证时），有时是格式化后的值。
+
+现在把它分成 latestValidValue、propsValue 两部分。
+
+* propsValue 是传给 input 的部分，它代表文本框中当前显示出来的内容。 +
+  因为一般文本框中的内容永远是字符串，所以它也永远是字符串（注意要让各自定义 Input component 支持处理字符串值）。
+
+* latestValidValue 是最近一次验证通过了的合法值。 +
+  在 Form / Field 外部读取字段值的时候，就应该读取它；在实现 restoreValid 时也必须依赖于它。 +
+  不过要注意，在读取它之前，应该先判断字段是否处于 valid 状态，只在它处于 valid 状态时使用它的值。 +
+  因为在其他状态下，它代表的是字段值发生变化之前的合法值，也就是老的值。一旦使用了，可能发生误判或用过时的数据执行了操作...。 +
+  （除非你真的就想取得上一次的合法值，像 restoreValid 那样）
+
+因为 latestValidValue 这个名字太长了，使用前又要先进行判断，用起来不是很方便，因此 Field 中还额外提供一个 alias: value。 +
+它代表的是字段当前的合法值。在字段处于合法状态的时候，读取它和读取 latestValidValue 是完全一样的； +
+在字段没有处于 valid 状态的时候（即 invalid 或 validating 或 toBeValid），它的值是 undefined。 +
+所以无论在什么情况下，这个属性的值都可以放心读取。 +
+（为了简便，后面通常用 value 来指代 latestValidValue）
+
+这个新设计最关键的作用，是使得验证字段值的行为可以不影响 propsValue，因为 value 和 propsValue 是分离的。 +
+验证得到的格式化后的值，可以只写入到 value 上。 +
+这样可以避免验证行为干扰用户的输入。 +
+例如用户想要输入 0.01，刚输到 0.0，触发了验证。在以前，这个 0.0 就会被简化成 0，干扰了用户的输入；而现在就不会有这样的问题。 +
+之前之所以担心在 onChange 时执行验证，就是怕这会干扰用户输入，现在就不用怕了。
+
+propsValue 在理论上永远不需要格式化，不会影响应用的运行。 +
+不过为了看起来美观，还是应该适时地格式化一下。这个适时就是指不会影响用户正常输入的时候，那么在字段 onBlur 后比较合适。 +
+所以如果字段在 onBlur 时是 valid 的，那么就把 value 转换成 string 作为 propsValue。 +
+如果 onBlur 时不是 valid 的，就等下次字段完成验证时，把 value 转换成 string 作为 propsValue。 +
+（前提是下次完成验证时，字段处于 onBlur 状态）
+
+value 在字段不处于 valid 状态时是 undefined 的，这样会不会带来问题？ +
+（或者说在非 valid 状态下没有能拿来用的可用 value 会不会带来问题？） +
+应该不会。 +
+有可能使用到 value 的地方有下面几个：
+
+. 在原来的设计里，value 会被传递给 input，所以会被 input 读取，所以它不能为 undefined。 +
+  但现在它不需要被 input 读取了。传给 input 的是 propsValue，而它是实时更新的。
+
+. 其他 Field 或外部代码可能需要读取这个 Field 的 value。这样不用担心。它们肯定是只在此字段是 valid 的时，需要读取 value。 +
+  如果字段处于其他状态，它拿一个不知道合不合法的值回去做什么？
+
+. 在 Form onValid 或 onSubmit 回调中使用。这也不需要担心。因为这两个回调只在所有字段都是 valid 的情况下被触发，此时 field 是有值的。
+
+另外，按照 value 现在的设计，无需再向原来那样，在异步 validate 执行前，先把同步 validate 的格式化结果写入给它。 +
+上面已经分析了，在非 valid 状态下，是没有什么地方需要读取 value 的。
+
+
+=== 由 Field value 新设计引发的 restoreValid 行为的变化
+上面 Field value 已经被设计成了不会干扰用户的输入过程，那么 restoreValid 也应该这样设计。 +
+（也就是所有更新 propsValue 的行为，都应该在 input 没有焦点的情况下发生）
+
+它原本的实现方式，是在每次验证结束后，如果验证结果是 invalid，就还原回之前的 valid 值。 +
+现在变成在验证完成不立刻执行此行为，而是等到 onBlur 的时候。如果 onBlur 时字段依然处于 invalid 状态，则还原回 valid 状态： +
+用 latestValidValue 代替 propsValue 的当前值；然后把 Field status 设为 valid。
+
+
+=== 新设计下 Field 的运行模式
+
+....
+Field
+    latestValidValue
+    propsValue
+    status      （valid / invalid / validating / toBeValid）
+    shouldRestoreValid
+    hasFocus
+
+    get value() {
+        if(status === 'valid') return this.latestValidValue
+    }
+
+Event: onFocus
+    hasFocus = true
+
+Event: onChange
+    propsValue = event.target.value
+    status = toBeValid
+    setTimeout(valid)
+
+valid
+    status = validating
+
+    result = validator.validate(propsValue)
+    if(result.valid) {
+        latestValidValue = result.value
+        status = valid
+
+        if(!hasFocus) {
+            propsValue = latestValidValue
+        }
+
+        onValid()
+    } else {
+        status = invalid
+
+        if(!hasFocus and shouldRestoreValid) {
+            propsValue = latestValidValue
+            status = valid
+        }
+    }
+
+Event: onBlur
+    hasFocus = false
+
+    if(status === toBeValid) {
+        valid()
+    } else if(status === valid) {
+        propsValue = latestValidValue
+    } else if(status === invalid) {
+        if(shouldRestoreValid) {
+            propsValue = latestValidValue
+            status = valid
+        }
+    }
+
+Event: onValid
+....
+
+form 会在有 field 触发 onValid 时检查其他 field，如果其他 field 都是 valid 的，则触发 form 的 onValid 回调 +
+这一设计刚好保证了 restoreValid 行为不会触发 form 的 onValid 回调，因为 restoreValid 行为也不会触发 field 的 onValid 回调。
+
+=== 关于 Group（实际上变为 depends 了）
+在验证 group 中的其他 field 时，应使用它们的 propsValue 进行验证。
+
+''''
+
+
+== 用 depends 代替 Group
+
+=== group 是否真的有必要？
+一个 field 改变值，是否真的会有这样的业务逻辑，导致其他字段变得不合法 +
+即使可能有，是否应该允许它导致其他字段变得不合法？
+
+group 这个概念本身不够完整。也许，应该变成 depends，即依赖。 +
+首先，一个“依赖”关系不像 group，它是单方面的。 +
+例如这里有两个字段：“最大数值”和“当前数值”，当前数值的合法性依赖于最大数值。 +
+最大数值为 2 时，当前数值不能大于 2，不然就视为非法。当最大数值字段更新时，需要重新验证当前数值字段。 +
+（由此可见，depends 也会导致 restoreValid 无法执行。重新验证的结果是 invalid 时，并没有办法找出一个能通过验证的“之前的值”） +
+而“当前数值”无论设成多少，都不影响“最大数值”字段是否合法，也不会触发此字段的重新验证。
+
+不过，也可以互相依赖。互相依赖其实就是之前说的 group。 +
+例如这里有 10 个桃子，要分给两个人。在两个字段里分别填入分给两个人的桃子数量。 +
+这两个字段的值加起来必须正好等于 10。 +
+任意一个字段的值发生变化，都会影响另一个字段的合法性。
+
+由上面的情况可见，依赖，包括之前说的 group，都是有必要的。
+
+不过实际使用中，原本认为需要使用 group 的字段，大部分情况下其实都可以不使用 group 或依赖。 +
+例如客户等级列表，5个等级的名称，其实这5个名称字段不用设置成一个 group。 +
+无论是否设置 group，基本的验证逻辑都是： +
+有任意一个字段更新了时，检查其余 4 个字段中，状态为 valid 的字段里，是否有重名的字段，以判断当前字段的新值是否合法。 +
+这一过程结束后，没有必要让那4个字段重新验证自己的值（检查了也不会带来什么好处），所以这里 group 发挥不了什么作用。
+
+group 能够发挥作用，是在发生名称互换的时候： 1=A, 2=B, 3=C 变成 1=C, 2=B, 3=A。 +
+用户先把 1 设成 C，此时它变得不合法；用户不去修正它，又把 3 设成 A。 +
+此时，因为修改 3 会触发 1 和 2 的重新验证，在这一验证过程中，1 就变得合法了。 +
+（这样的情况下，就会发生上面提到的，一次 form onValid 调用是因多个 field 同时变得 valid 而导致）
+
+那么如果没有 group，应该怎么处理这种情况？那就可以利用 restoreValid。 +
+在用户把 1 设成 C 时，禁止此次修改，还原回之前的值。 +
+不再像之前那样，由系统负责解决冲突问题，而是让用户自己去解决。 +
+（他必须先把 1 设成 D，再把 3 设成 A，再把 1 设成 C） +
+这就像 windows 的文件夹，它不支持名称重复，碰到名称互换的情况，必须由用户自己想办法。 +
+这样程序逻辑上更清晰，代码更好实现，用户其实也完全能够理解程序的行为。
+
+''''
+
+
+有这样一种情况，在 BillRecords 里，number input 会在它的值为 0 或为空时移除对应商品条目。 +
+如果 number input 设置成在 onChange 时触发验证，那么用户想要清空当前的文本框内容重新输入时，还没等他开始重新输入，整个条目都会被移除。 +
+对此比较好的解决办法是，在 onChange 时，不执行移除条目的操作；只在 onBlur 触发时才在字段值为空的情况下移除条目。
+
+这样的行为很容易实现。只要不在 onValid 时处理 0 / null 值，改为在 input 的 onBlur 事件中去处理就好了。
+
+具体来说：
+把 Field 设置成允许 0 和 null 值。 +
+在 onValid 回调里，如果发现是因为某个字段变成了 0 或 null 值而触发了此次回调，那么跳过对此次回调的处理，直接返回。 +
+使用者手动给 input 添加一个 onBlur 回调 +
+（因为 Field / Form 也需要给 input 设置 onBlur 回调，所以需要用一个包裹函数把这两个回调合并起来，把 Field / Form 的回调放在前面比较好一点， +
+还可以写个 helper function 放在 common/lib/functions 里，专门用来合并两个回调函数） +
+在使用者手动指定的 onBlur 回调中，如果发现 trim 后的字段值是 0（或其他能转换成 0 的值，如 00）或空白，则执行移除操作。 +
+因为把 Field 的 onBlur 回调放在自定义的回调前面了，所以其实也可以直接读取 field value，因为此时字段至少同步验证的部分是已经验证好了的：先看 field 是不是 valid 的，如果是 valid 的，再看其 value 是不是 0 或 null，如果是，就删除字段。 +
+看 field value 的好处是，这个值是经过 Field 格式化的，不用再自己进行 trim 等处理，也不容易出现疏漏。
+
+''''
+
+
+其实，压根就没必要为了实现“多次更新数据，只触发一次 re-render”而让 form 单独维护一个 redux store。
+
+. 如果把 form state 存放到 component local state 里，因为 react 有 batchedUpdates 机制，所以在一个事件回调里的多次 setState 只触发一次更新。
+
+. 如果把 form state 存放到 redux store 里，因为 react-redux 的 connect() 的原理是把从 store 处接收到的 state 写入到它自己的 local component state 里， +
+  所以也一样能用上 batchedUpdates 机制。
+
+不过如果使用者在事件之外调用了 form action 呢？无论 form state 是放在 component local state 还是 redux store 中，都可以通过让所有暴露在外的  action 都使用上 unstable_batchedUpdates、强制启用 batchedUpdates 机制来解决此问题。

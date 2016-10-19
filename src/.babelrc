@@ -2,6 +2,8 @@
     "presets": ["anjianshi-react-ie"],
 
     "plugins": [
+        // 简化在深入的目录里对上层目录代码的引入。
+        // 例如原本需要 `import "../../../xxx"` 这样的代码，现在 `import "xxx"` 即可。
         ["module-resolver", {
             "root": ["./src"]
         }]
