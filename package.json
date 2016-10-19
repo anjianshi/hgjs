@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "hgjs_build",
   "version": "0.0.1",
   "packageJsonDescribe": "this package.json file is only for development. the real package.json file was under src/",
