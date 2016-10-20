@@ -3,19 +3,23 @@
   "name": "hgjs_build",
   "version": "0.0.1",
   "packageJsonDescribe": "this package.json file is only for development. the real package.json file was under src/",
+  "script_arg_describe": "http://stackoverflow.com/questions/11580961/sending-command-line-arguments-to-npm-script",
   "scripts": {
-    "pre-build": "npm run clean && npm run distPackageJson",
-    "build": "npm run pre-build && babel src -d dist",
-    "watch": "npm run pre-build && babel src -d dist --watch",
-    "publish": "npm run productBuild && cd dist && npm publish",
-    "productBuild": "NODE_ENV=production npm run build",
+    "dev-compile": "yarn run prepare-compile && yarn run install-deps && yarn run raw-compile -- $1",
+    "watch": "yarn run dev-compile -- --watch",
+    "prod-compile": "yarn run prepare-compile && NODE_ENV=production yarn run raw-compile",
+    "publish": "yarn run prod-compile && cd dist && yarn publish",
+
     "clean": "rimraf dist && mkdir dist",
-    "distPackageJson": "cp src/package.json dist/package.json"
+    "dist-package-json": "cp src/package.json dist/package.json",
+    "prepare-compile": "yarn run clean && yarn run dist-package-json",
+    "install-deps": "cd dist && yarn install",
+    "raw-compile": "babel src -d dist $1"
   },
   "devDependencies": {
     "babel-cli": "^6.16.0",
     "babel-plugin-module-resolver": "^2.2.0",
-    "babel-preset-anjianshi-react-ie": "^0.0.3",
+    "babel-preset-anjianshi-react-ie": "^0.0.4",
     "eslint": "^3.4.0",
     "eslint-config-anjianshi-react-native": "^0.0.4",
     "rimraf": "^2.5.4"
