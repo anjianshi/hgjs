@@ -1,0 +1,13 @@
+A collection of utility libraries used by huoguan.net's products.
+
+要正常使用此类库，一定记得要在 module 的代码里引入 babel-polyfill +
+要不然一些功能，例如 Symbol（相关的 for of...）在一些环境下（例如 iOS 8）无法使用，会导致出错。 +
+此类库虽然把它加入了依赖，但并没有在代码里引入它，要由使用者自行引入。
+
+=== 开发中使用
+
+. 先进行一次编译，以生成 `dist/` 目录：`yarn run dev-compile`
+. 对 `dist/` 目录执行 `yarn link`：`cd dist/ && yarn link`
+. 根据需要，可以回到根目录执行 `yarn run watch`，持续编译代码
+. 进入依赖 `hgjs` 的项目中，执行 `yarn link hgjs`
+
