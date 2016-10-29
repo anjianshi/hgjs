@@ -143,6 +143,7 @@ export class Link extends React.Component {
     }
 
     render() {
-        return <Link.BaseComponent {...extraProps(this)} onClick={this.go} />
+        const { BaseComponent } = this.props
+        return <BaseComponent {...extraProps(this)} onClick={this.go} />
     }
 }
