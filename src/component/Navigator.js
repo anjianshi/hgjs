@@ -25,7 +25,7 @@ export class Navigator extends React.Component {
         // 在设置了此属性的情况下，会把 route stack 里最后一个 route 作为当前 route，而不再使用 defaultRoute
         initialRouteStack: PropTypes.arrayOf(
             PropTypes.shape({
-                route: PropTypes.string.isRequired,
+                path: PropTypes.string.isRequired,
                 data: PropTypes.any,
             })
         ),
@@ -96,6 +96,7 @@ export class Navigator extends React.Component {
             data: currRoute.data,
             component: this.props.routes[currRoute.path],
             isFirst: stack.length === 1,
+            stack: this.state.routeStack,
 
             go: this.go,
             back: this.back,
