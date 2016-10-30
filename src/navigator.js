@@ -122,11 +122,15 @@ BaseComponent:
 在 ReactNative 下，因为不存在 <a> 标签，也不存在 onClick 事件，可以自定义一个 component，
 把 onClick 事件转译成 RN 下的事件，然后渲染 RN 下的 element。
 */
-@bindCallbacks('go')
+@bindCallbacks('jump')
 export class Link extends React.Component {
     static propTypes = {
-        to: PropTypes.string.isRequired,
+        to: PropTypes.string,
         data: PropTypes.any,
+
+        // 若次 props 为 true，则点击此链接时会返回上一个路由。（此时 to / data props 会失效）
+        back: PropTypes.bool,
+
         BaseComponent: PropTypes.any,
         // 其他 props 会直接传给 BaseComponent
     }
@@ -139,12 +143,16 @@ export class Link extends React.Component {
         nav: PropTypes.object.isRequired,
     }
 
-    go() {
-        this.context.nav.go(this.props.to, this.props.data)
+    jump() {
+        if(this.props.back) {
+            this.context.nav.back()
+        } else {
+            this.context.nav.go(this.props.to, this.props.data)
+        }
     }
 
     render() {
         const { BaseComponent } = this.props
-        return <BaseComponent {...extraProps(this)} onClick={this.go} />
+        return <BaseComponent {...extraProps(this)} onClick={this.jump} />
     }
 }
