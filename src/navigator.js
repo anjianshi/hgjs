@@ -97,6 +97,7 @@ export class Navigator extends React.Component {
             component: this.props.routes[currRoute.path],
             isFirst: stack.length === 1,
             stack: this.state.routeStack,
+            defaultRoute: this.props.defaultRoute,
 
             go: this.go,
             back: this.back,
@@ -130,8 +131,12 @@ export class Link extends React.Component {
         // 若为 true，则会用新 route 替换当前 route，而不是在 route stack 里新增一条记录。
         replace: PropTypes.bool,
 
-        // 若次 props 为 true，则点击此链接时会返回上一个路由。（此时 to / data props 会失效）
+        // 若此 props 为 true，则点击此链接时会返回上一个路由。（此时 to / data props 会失效）
         back: PropTypes.bool,
+        // 对于 back 为 true 的链接，若 route stack 里已经不存在上一个路由，则在 props 设为 true（默认）的情况下，
+        // 会改为跳转到 defaultRoute（必须给 Navigator 指定 defaultRoute 才有效）；
+        // 否则，点击链接不会有任何反应
+        fallback: PropTypes.bool,
 
         BaseComponent: PropTypes.any,
         // 其他 props 会直接传给 BaseComponent
@@ -139,6 +144,7 @@ export class Link extends React.Component {
 
     static defaultProps = {
         replace: false,
+        fallback: true,
         BaseComponent: props => <a {...props} />
     }
 
@@ -147,11 +153,19 @@ export class Link extends React.Component {
     }
 
     jump() {
+        const nav = this.context.nav
+
         if(this.props.back) {
-            this.context.nav.back()
+            if(nav.isFirst) {
+                if(this.props.fallback && nav.defaultRoute) {
+                    nav.go(nav.defaultRoute)
+                }
+            } else {
+                nav.back()
+            }
         } else {
             const method = this.props.replace ? 'replace' : 'go'
-            this.context.nav[method](this.props.to, this.props.data)
+            nav[method](this.props.to, this.props.data)
         }
     }
 
