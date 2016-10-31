@@ -127,6 +127,8 @@ export class Link extends React.Component {
     static propTypes = {
         to: PropTypes.string,
         data: PropTypes.any,
+        // 若为 true，则会用新 route 替换当前 route，而不是在 route stack 里新增一条记录。
+        replace: PropTypes.bool,
 
         // 若次 props 为 true，则点击此链接时会返回上一个路由。（此时 to / data props 会失效）
         back: PropTypes.bool,
@@ -136,6 +138,7 @@ export class Link extends React.Component {
     }
 
     static defaultProps = {
+        replace: false,
         BaseComponent: props => <a {...props} />
     }
 
@@ -147,7 +150,8 @@ export class Link extends React.Component {
         if(this.props.back) {
             this.context.nav.back()
         } else {
-            this.context.nav.go(this.props.to, this.props.data)
+            const method = this.props.replace ? 'replace' : 'go'
+            this.context.nav[method](this.props.to, this.props.data)
         }
     }
 
