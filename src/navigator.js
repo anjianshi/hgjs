@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react'
-import { pendingState, bindCallbacks, extraProps } from 'component'
+import { reduxState, bindCallbacks, extraProps } from 'component'
 import { isEqual } from 'lodash'
 
 
@@ -7,28 +7,35 @@ import { isEqual } from 'lodash'
 简易的 navigator（router）
 可用于需要 router，但不需要浏览器地址栏及 History API 支持的地方。例如 Electron 以及 ReactNative app。
 
-此 component 会生成一个 navigator 对象，通过这个对象来获取导航信息以及执行导航操作。
+此 component 会生成一个 navigator 对象， app 就通过这个对象来获取导航信息以及执行导航操作。
 这个对象会通过 nav context 提供；此外，如果传给这个 component 的 children 是一个 function，还会把这个对象作为参数传给这个 function。
+
+此 component 必须搭配 redux store 使用，且一个 app 中只能有一个 Navigator。
 */
-@pendingState
-@bindCallbacks('go', 'back', 'replace')
+
+
+function makeRoute(path, routeData) {
+    return { path, data: routeData }
+}
+
+
+@reduxState(props => ({
+    key: 'com-navigator',
+    initialState: {
+        routeStack: [makeRoute(props.defaultRoute, null)]
+    },
+    // 这个不设为 true 的话，HMR 状态下，每次因代码更新而重新渲染，因为都会有一个 unmount / mount 的过程，
+    // 所以 route stack 就会被清空。
+    cache: true,
+}))
+@bindCallbacks('action_pushRoute', 'action_popRoute', 'action_replaceRoute')
 export class Navigator extends React.Component {
     static propTypes = {
         // 定义此 app 的 routes 列表。格式： { path: component, ... }
         routes: PropTypes.object.isRequired,
 
-        // 指定 app 刚启动时要显示的 route。在 initialRouteStack 有值的情况下可以不指定
-        defaultRoute: PropTypes.string,
-
-        // 在 app 启动时直接将指定的 route stack 填充进去。
-        // 可在 app 被终止后、从持久化存储里还原状态时用到。
-        // 在设置了此属性的情况下，会把 route stack 里最后一个 route 作为当前 route，而不再使用 defaultRoute
-        initialRouteStack: PropTypes.arrayOf(
-            PropTypes.shape({
-                path: PropTypes.string.isRequired,
-                data: PropTypes.any,
-            })
-        ),
+        // 指定默认显示的 route（只支持指定 path，不支持指定 data）
+        defaultRoute: PropTypes.string.isRequired,
 
         children: PropTypes.oneOfType([
             PropTypes.node,
@@ -40,52 +47,41 @@ export class Navigator extends React.Component {
         nav: PropTypes.object.isRequired,
     }
 
-    constructor(props) {
-        super(props)
-
-        this.state = {
-            routeStack: props.initialRouteStack
-                ? props.initialRouteStack
-                : [this.makeRoute(props.defaultRoute, null)]
-        }
-    }
-
     getChildContext() {
         return {
             nav: this.generateNavObj()
         }
     }
 
-    // ======================================
+    // ===== actions =====
 
-    makeRoute(path, routeData) {
-        return { path, data: routeData }
-    }
-
-    go(path, routeData=null) {
-        const stack = this.pendingState.routeStack
+    // 向 route stack 中添加一条记录
+    action_pushRoute(path, routeData) {
+        const stack = this.state.routeStack
 
         const current = stack[stack.length - 1]
         if(path === current.path && isEqual(routeData, current.data)) return
 
         this.setState({
-            routeStack: [...stack, this.makeRoute(path, routeData)]
+            routeStack: [...stack, makeRoute(path, routeData)]
         })
     }
 
-    back() {
-        const stack = [...this.pendingState.routeStack]
+    action_popRoute() {
+        const stack = [...this.state.routeStack]
         if(stack.length === 1) return
 
         stack.pop()
         this.setState({ routeStack: stack })
     }
 
-    replace(path, routeData=null) {
-        const stack = [...this.pendingState.routeStack]
-        stack[stack.length - 1] = this.makeRoute(path, routeData)
+    action_replaceRoute(path, routeData=null) {
+        const stack = [...this.state.routeStack]
+        stack[stack.length - 1] = makeRoute(path, routeData)
         this.setState({ routeStack: stack })
     }
+
+    // ===== methods =====
 
     generateNavObj() {
         const stack = this.state.routeStack
@@ -99,11 +95,13 @@ export class Navigator extends React.Component {
             stack: this.state.routeStack,
             defaultRoute: this.props.defaultRoute,
 
-            go: this.go,
-            back: this.back,
-            replace: this.replace,
+            go: this.action_pushRoute,
+            back: this.action_popRoute,
+            replace: this.action_replaceRoute,
         }
     }
+
+    // ======================================
 
     render() {
         const { children } = this.props
