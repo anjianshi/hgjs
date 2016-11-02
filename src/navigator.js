@@ -37,6 +37,11 @@ export class Navigator extends React.Component {
         // 指定默认显示的 route（只支持指定 path，不支持指定 data）
         defaultRoute: PropTypes.string.isRequired,
 
+        // 若指定了此 props，则 route stack 会保持在指定的长度，超出长度时会将多出的部分移除
+        // 主要用来避免 route stack 的内容无限制的增长，
+        // 尤其是 app 实现了 state 持久化的时候，如果不进行限制，那么 app 从最开始使用开始的所有 route 都会被记录下来。
+        stackLimit: PropTypes.number,
+
         children: PropTypes.oneOfType([
             PropTypes.node,
             PropTypes.func,
@@ -57,14 +62,16 @@ export class Navigator extends React.Component {
 
     // 向 route stack 中添加一条记录
     action_pushRoute(path, routeData) {
-        const stack = this.state.routeStack
+        const stack = [...this.state.routeStack]
 
         const current = stack[stack.length - 1]
         if(path === current.path && isEqual(routeData, current.data)) return
 
-        this.setState({
-            routeStack: [...stack, makeRoute(path, routeData)]
-        })
+        const limit = this.props.stackLimit
+        if(limit && stack.length === limit) stack.shift()
+
+        stack.push(makeRoute(path, routeData))
+        this.setState({ routeStack: stack })
     }
 
     action_popRoute() {
