@@ -96,7 +96,7 @@ node.getState()     // 返回：2
 */
 
 
-import { combineReducers, createStore } from 'redux'
+import { createStore } from 'redux'
 
 function emptyReducer(state={}) {
     return state
@@ -188,4 +188,51 @@ export function createReducerHost() {
         registerHost,
         bind,               // 只在内部使用
     }
+}
+
+
+/*
+取自： https://github.com/reactjs/redux/blob/master/src/combineReducers.js
+
+在实现了 state 持久化的 app 中，原版的 combineReducers 不能适应动态添加 reducer 的情况。
+因为会出现 state 中已经有了某个 key，但对应的 reducer 却不存在的情况（state 是在创建 store 时就指定了的，但 reducer 要在之后才添加进来）,
+在这种情况下，它会抛出 warning。
+因此，这个自定义的版本去掉了这个 warning。
+详见： http://stackoverflow.com/questions/34095804/replacereducer-causing-unexpected-key-error
+*/
+function combineReducers(reducers) {
+    const reducerKeys = Object.keys(reducers)
+
+    return function combination(state = {}, action) {
+        let hasChanged = false
+        // 这里和原版 combineReducers 的行为不同。
+        // 原版的 nextState 一开始是空 object，
+        // 在实现了 state 持久化的 app 中，有可能某个 state 节点有 state，但是对应的 reducer 尚未绑定上来，
+        // 这种情况下，原版的 combineReducers 会导致这个 state 节点的 state 丢失。
+        // 而现在这里把 state 的 shallow copy 作为 nextState，就避免了这个情况。
+        const nextState = {...state}
+        for(let i = 0; i < reducerKeys.length; i++) {
+            const key = reducerKeys[i]
+            const reducer = reducers[key]
+            const previousStateForKey = state[key]
+            const nextStateForKey = reducer(previousStateForKey, action)
+            if(typeof nextStateForKey === 'undefined') {
+                var errorMessage = getUndefinedStateErrorMessage(key, action)
+                throw new Error(errorMessage)
+            }
+            nextState[key] = nextStateForKey
+            hasChanged = hasChanged || nextStateForKey !== previousStateForKey
+        }
+        return hasChanged ? nextState : state
+    }
+}
+
+function getUndefinedStateErrorMessage(key, action) {
+    const actionType = action && action.type
+    const actionName = actionType && `"${actionType.toString()}"` || 'an action'
+
+    return (
+        `Given action ${actionName}, reducer "${key}" returned undefined. ` +
+        `To ignore an action, you must explicitly return the previous state.`
+    )
 }
