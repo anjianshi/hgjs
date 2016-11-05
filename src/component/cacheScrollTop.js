@@ -16,22 +16,27 @@ export function cacheScrollTop(getTargetRef, extraKey=null) {
         class ScrollTopCached extends Component {
             static displayName = Component.displayName || Component.name
 
+            constructor(props) {
+                super(props)
+
+                this['toBeRestore_' + extraKey] = false
+            }
+
+            // 此回调会在 component 每次切换 state 时被调用。具体时机是 componentWillMount 或 componentWillReceiveProps 时。
             componentDidLoadState() {
-                if(this.state[stateKey]) {
-                    const ref = getTargetRef(this)
-                    if(ref) ref.scrollTop = this.state[stateKey]
-                    this['action__clearCachedScrollTop_' + extraKey]()
-                }
+                this['toBeRestore_' + extraKey] = true
                 if(super.componentDidLoadState) super.componentDidLoadState()
             }
 
+            componentDidMount() { this['restoreScroll_' + extraKey]() }
+            componentDidUpdate() { this['restoreScroll_' + extraKey]() }
+
             componentWillClearState() {
                 if(super.componentWillClearState) super.componentWillClearState()
-
-                const ref = getTargetRef(this)
-                if(ref) this['action__cacheScrollTop_' + extraKey](ref.scrollTop)
-                ref.scrollTop = 0
+                this['recordScroll_' + extraKey]()
             }
+
+            // ===== actions =====
 
             ['action__cacheScrollTop_' + extraKey](scrollTop) {
                 this.setState({ [stateKey]: scrollTop })
@@ -39,6 +44,27 @@ export function cacheScrollTop(getTargetRef, extraKey=null) {
 
             ['action__clearCachedScrollTop_' + extraKey]() {
                 this.setState({ [stateKey]: null })
+            }
+
+            // ====== methods =====
+
+            ['restoreScroll_' + extraKey]() {
+                if(this['toBeRestore_' + extraKey]) {
+                    if(this.state[stateKey]) {
+                        const ref = getTargetRef(this)
+                        if(ref) ref.scrollTop = this.state[stateKey]
+                        this['action__clearCachedScrollTop_' + extraKey]()
+                    }
+                    this['toBeRestore_' + extraKey] = false
+                }
+            }
+
+            ['recordScroll_' + extraKey]() {
+                const ref = getTargetRef(this)
+                if(ref) {
+                    this['action__cacheScrollTop_' + extraKey](ref.scrollTop)
+                    ref.scrollTop = 0
+                }
             }
         }
         return ScrollTopCached
