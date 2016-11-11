@@ -125,7 +125,7 @@ export class NumberValidator extends _NumberValidator {
 
 /*
 将用户输入的以“元”为单位的数据转换成以“厘”为单位的金额数据。
-详见 [处理浮点数](https://dev.kgzx.net/wiki/pages/viewpage.action?pageId=11665802)
+详见 [处理浮点数](https://github.com/anjianshi/hgjs/blob/master/doc/%E5%A4%84%E7%90%86%E6%B5%AE%E7%82%B9%E6%95%B0.adoc)
 */
 export class MoneyValidator extends _NumberValidator {
     rule_type(value, valid, invalid) {
