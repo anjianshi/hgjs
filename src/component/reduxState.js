@@ -155,24 +155,32 @@ export function reduxState(getOptions) {
             // 包裹 component class 中的 action creator method，以提供更丰富的日志信息
             [_wrapActionCreators]() {
                 const self = this
-                for(const name in this) {
-                    if(name.startsWith('action_') && typeof this[name] === 'function') {
-                        const origMethod = this[name]
-                        this[name] = function loggedActionCreatorWrap(...args) {
-                            /*
-                            在这里，this 有可能是 component instance，也有可能不是。
-                            如果使用者对 action creator 应用了 bindCallbacks decorator，在调用它时，就无需确保 this 必须指向 component instance，
-                            此时，this 就很可能是其他的什么值，这对 method 的运行不会带来任何影响。
 
-                            但也有可能 action creator 没有应用 bindCallbacks，那么在调用时就必须确保 this 指向 comopnent instance。
+                // 此 component 接收到的 Component 可能是已经经过多个其他 decorator 继承 / 修饰过的 component。
+                // 需要一级一级通过 prototype 递归检查上去，才能找到真正的 app component 中定义的 methods。
+                // （因为有些 decorator 例如 cacheScrollTop 也会定义一些 `action_` method，所以中途碰到的这些 method 也要进行处理）
+                let obj = this
+                while(obj !== null) {
+                    for(const name of Object.getOwnPropertyNames(obj)) {
+                        if(name.startsWith('action_') && typeof obj[name] === 'function') {
+                            const origMethod = obj[name]
+                            obj[name] = function loggedActionCreatorWrap(...args) {
+                                /*
+                                在这里，this 有可能是 component instance，也有可能不是。
+                                如果使用者对 action creator 应用了 bindCallbacks decorator，在调用它时，就无需确保 this 必须指向 component instance，
+                                此时，this 就很可能是其他的什么值，这对 method 的运行不会带来任何影响。
 
-                            无论是上面哪种情况，这里都应该把接收到的 this 原样传递给 action creator。
-                            也就是让使用者自己控制 action creator 要不要预先绑定 this，以及调用 action creator 时要不要控制 this，此 wrapper 不做干涉。
-                            不过因为此 wrapper 本身的运行需要用到 component instance，所以额外建立了一个 self 变量，对于 wrapper 自身，使用这个变量而不是 this。
-                            */
-                            return loggedActionCreator.call(this, self, self.props[_options].key, origMethod, name, ...args)
+                                但也有可能 action creator 没有应用 bindCallbacks，那么在调用时就必须确保 this 指向 comopnent instance。
+
+                                无论是上面哪种情况，这里都应该把接收到的 this 原样传递给 action creator。
+                                也就是让使用者自己控制 action creator 要不要预先绑定 this，以及调用 action creator 时要不要控制 this，此 wrapper 不做干涉。
+                                不过因为此 wrapper 本身的运行需要用到 component instance，所以额外建立了一个 self 变量，对于 wrapper 自身，使用这个变量而不是 this。
+                                */
+                                return loggedActionCreator.call(this, self, self.props[_options].key, origMethod, name, ...args)
+                            }
                         }
                     }
+                    obj = Object.getPrototypeOf(obj)
                 }
             }
 
