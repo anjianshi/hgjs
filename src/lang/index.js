@@ -14,17 +14,17 @@ export * from './shallowEqual'
  * @return {array[string]}
  */
 export function getAllPropertyNames(obj, filter=null) {
-    const names = [];
-    const prototype = Object.getPrototypeOf(obj);
+    const names = []
+    const prototype = Object.getPrototypeOf(obj)
     if(prototype) {
-        names.push(...getAllPropertyNames(prototype, filter));
+        names.push(...getAllPropertyNames(prototype, filter))
         Object.getOwnPropertyNames(prototype).forEach(name => {
             if(names.indexOf(name) === -1 && (filter === null || filter(name, prototype[name]))) {
-                names.push(name);
+                names.push(name)
             }
-        });
+        })
     }
-    return names;
+    return names
 }
 
 export function getAllMethodNames(obj, filter=null) {
