@@ -1,17 +1,17 @@
 {
     "name": "hgjs",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "homepage": "https://github.com/anjianshi/hgjs",
     "license": "MIT",
     "author": "anjianshi <anjianshi@gmail.com>",
     "user": "anjianshi",
     "dependencies": {
-        "babel-polyfill": "^6.16.0",
-        "bluebird": "^3.4.6",
+        "babel-polyfill": "^6.22.0",
+        "bluebird": "^3.4.7",
         "jquery-param": "^0.2.0",
-        "lodash": "^4.16.4",
-        "react-redux": "^4.4.5",
-        "react": "^15.3.2",
+        "lodash": "^4.17.4",
+        "react-redux": "^5.0.2",
+        "react": "^15.4.2",
         "redux": "^3.6.0"
     }
 }
