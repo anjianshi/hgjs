@@ -20,7 +20,7 @@
   "devDependencies": {
     "babel-cli": "^6.22.2",
     "babel-plugin-module-resolver": "^2.4.0",
-    "babel-preset-anjianshi-react-ie": "^0.0.6",
+    "babel-preset-anjianshi-react": "^0.0.6",
     "eslint": "^3.14.1",
     "eslint-config-anjianshi-react-native": "^0.0.7",
     "rimraf": "^2.5.4"

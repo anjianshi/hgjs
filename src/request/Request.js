@@ -5,7 +5,7 @@
  * - response Content-Type 为 json 时，自动对返回值进行解析；否则把返回值当作纯文本来处理
  * - 支持 timeout 和超时重试
  * - 不支持跨域 / JSONP；不支持 sync 请求
- * - 浏览器支持到 IE11
+ * - 浏览器支持到 IE11（主要是 IE9 不支持 FormData；对于 IE10 现在其实并没有看到用到哪些它不支持的功能，所以其实可能也是支持的）
  *
  * 一般情况下不应直接使用此库，而应该使用封装了更多细节的 API()
  *
@@ -15,8 +15,6 @@
  * https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest
  * http://www.w3.org/TR/2012/WD-XMLHttpRequest-20120117/#event-xhr-load
  */
-
-// TODO 支持 IE 9
 
 import jparam from 'jquery-param'
 import { Promise } from './promise'

@@ -4,6 +4,11 @@ A collection of utility libraries used by huoguan.net's products.
 要不然一些功能，例如 Symbol（相关的 for of...）在一些环境下（例如 iOS 8）无法使用，会导致出错。 +
 此类库虽然把它加入了依赖，但并没有在代码里引入它，要由使用者自行引入。
 
+=== 浏览器支持
+此类库在浏览器支持方面，不考虑 IE11 及以下的浏览器。 +
+其中 IE10 及以下的浏览器在 Babel 的支持方面或多或少的都有问题， +
+再考虑到微软官方已经不再为 IE11 及以下的浏览器提供支持了，所以干脆连同 IE11 一起，一律不予支持。
+
 === 开发中使用
 
 . 先进行一次编译，以生成 `dist/` 目录：`yarn run dev-compile`
