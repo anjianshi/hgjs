@@ -1,7 +1,6 @@
 {
   "private": true,
   "name": "hgjs_build",
-  "version": "0.0.1",
   "package-json-describe": "this package.json file is only for development. the real package.json file was under src/",
   "script_arg_describe": "http://stackoverflow.com/questions/11580961/sending-command-line-arguments-to-npm-script",
   "install-deps_describe": "yarn link 不像 npm link，会自动为 package 安装依赖，它需要我们手动执行安装。因为每次编译时都会清空之前的整个 dist 目录，所以每次都要重新安装一次依赖",
