@@ -1,5 +1,5 @@
 {
-    "presets": ["anjianshi-react-ie"],
+    "presets": ["anjianshi-react"],
 
     "plugins": [
         // 简化在深入的目录里对上层目录代码的引入。
