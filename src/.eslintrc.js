@@ -1,3 +1,3 @@
 module.exports = {
-    extends: ['anjianshi-react-native']
+    extends: ['anjianshi/react-native']
 }
