@@ -158,6 +158,7 @@ export function createReducerHost() {
        利用这个参数可以比较方便地解决此问题
     2. 让 reducer 也实现 hot replace
     方法： registerReducer(name, reducer, module.hot)
+    注意：HMR 环境下如果不这样做，会因为触发报错而使得页面被强制刷新，state 也跟着消失，HMR 的效果也就没有了
     */
     function registerReducer(name, reducer, allowReplace=false) {
         if(!(arguments.length >= 2 && typeof name === 'string')) throw new Error('registerReducer: 参数数量或格式不正确')
