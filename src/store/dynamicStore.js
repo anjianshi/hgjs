@@ -5,7 +5,7 @@ dynamic store 的结构类似文件系统，由文件（reducer）和文件夹�
 每个 reducer host 下，可以注册若干个子 reducer 和子 reducer host。
 store 作为整个结构的顶端，它本身也一个 reducer host。
 
-dynamic store 的主要有两个作用：
+dynamic store 主要有两个作用：
 1. 实现 reducer 的按需加载。
 在 dynamic store 中，reducer 的注册变成了分布式的。
 不再像之前那样必须在创建 store 时把所有 reducer 都引入进来；各个模块可以在自己被引用到时，才对自己的 reducer 进行注册。
@@ -149,6 +149,16 @@ export function createReducerHost() {
         }
     }
 
+    /*
+    关于 allowReplace 参数：
+    使用它可以做到保留原来的 state，但是把 reducer function 换成新提供的
+    大部分情况下，此参数只应在此工具内部使用。只有一个例外：在 HMR 环境下，可以利用此参数重新定义 reducer。
+    这样做的目的有两个：
+    1. HMR 环境下，component 文件每次重新载入，定义 reducer 的代码也会被重新载入、执行，并导致 reducer 重复定义，触发报错；
+       利用这个参数可以比较方便地解决此问题
+    2. 让 reducer 也实现 hot replace
+    方法： registerReducer(name, reducer, module.hot)
+    */
     function registerReducer(name, reducer, allowReplace=false) {
         if(!(arguments.length >= 2 && typeof name === 'string')) throw new Error('registerReducer: 参数数量或格式不正确')
         if(!allowReplace && reducers && (name in reducers)) throw new Error(`reducer '${name}' 已存在，不能再次注册`)
