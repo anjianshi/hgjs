@@ -52,7 +52,7 @@ export function hasValue(value) {
 }
 
 // 把 object 中值为 undefined 的项移除，不直接修改原 object，而是返回一个新 object
-//
+// -----
 // 原 object 中 key 为 Symbol 的内容也会被移入新 object（即使值为 undefined 也会被移入）
 // 此行为依赖于 lodash 的 _.pickBy() 会把 Symbol 属性也传给回调的特点。
 export function cleanObject(obj) {

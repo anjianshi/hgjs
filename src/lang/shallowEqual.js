@@ -3,7 +3,7 @@
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 
-/*eslint-disable no-self-compare */
+/*eslint-disable no-self-compare*/
 
 /**
  * inlined Object.is polyfill to avoid requiring consumers ship their own
