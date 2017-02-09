@@ -60,28 +60,26 @@ export function cleanObject(obj) {
     return pickBy(obj, (value, key) => symbolSet.has(key) || value !== undefined)
 }
 
-// 改进 lodash.pick，支持在 pick 的同时，对部分键进行重命名
-// 例如：      pickAs(obj, 'a', 'b', { c: cAlias, d: dAlias }, 'e', { f: fAlias})
-// 最终得到：   {a, b, cAlias, dAlias, e, fAlias}
+/*
+类似 lodash.pick，但支持在 pick 的同时，对部分键进行重命名
+对于 obj 中不存在的键，不会将其 pick 到返回的对象中
+例子：
+const obj = {a: 1, b: 2, c: 3, d: 4, f: 5}
+const picked = pickAs(obj, 'a', {b: 'x', c: 'y'}, 'notExist')
+// {a: 1, x: 2, y: 3}
+*/
 export function pickAs(obj, ...props) {
-    const alias = []
-    props = _baseFlatten(props).map(prop =>
-        isPlainObject(prop)
-            ? map(prop, (to, from) => {
-                // 要保证只在 from 和 to 不同的情况下添加 alias，不然后面执行 `delete result[from]` 时，会导致此项数据整个被清除
-                if(from !== to) {
-                    alias.push([from, to])
-                }
-                return from
-            })
-            : prop
-    )
+    const picked = {}
 
-    const result = pick(obj, ...props)
+    for(const prop of props) {
+        if(isPlainObject(prop)) {
+            for(const [from, to] of Object.entries(prop)) {
+                if(from in obj) picked[to] = obj[from]
+            }
+        } else {
+            if(prop in obj) picked[prop] = obj[prop]
+        }
+    }
 
-    alias.forEach(([from, to]) => {
-        result[to] = result[from]
-        delete result[from]
-    })
-    return result
+    return picked
 }
