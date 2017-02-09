@@ -26,6 +26,8 @@ const o2 = {
 即：
 o2.a.c === o1.a.c
 o2.b === o1.b
+
+以下各工具的测试用例见 test/lang/immutable.js
 */
 
 
@@ -75,7 +77,6 @@ updates 格式：
     [path, value, makeNode (optional)],
     ...
 ]
-
 */
 export function batchImmuSet(obj, updates) {
     return updates.reduce(

@@ -1,4 +1,4 @@
-import { immuSet, batchImmuSet, immuDel } from './immutable'
+import { immuSet, batchImmuSet, immuDel } from 'lang/immutable'
 
 let i = 1
 function test(a, b, equal=true) {

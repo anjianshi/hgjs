@@ -1,4 +1,4 @@
-import { setWith, pickBy, _baseFlatten, isPlainObject, map, pick } from 'lodash'
+import { setWith, pickBy, isPlainObject } from 'lodash'
 
 export * from './immutable'
 export * from './iterable'
