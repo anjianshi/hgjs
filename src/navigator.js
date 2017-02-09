@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { pick, isEqual } from 'lodash'
-import { bindCallbacks, extraProps } from 'component'
+import { extraProps } from 'component'
 
 
 /*
@@ -186,7 +186,6 @@ class NavigatorRender extends React.Component {
 /*
 构建一个能跳转到指定路由的超链接。（实际上不是真正的超链接，只是一个在用户点击时会进行导航的元素）
 */
-@bindCallbacks('onClick')
 export class Link extends React.Component {
     static propTypes = {
         // 要导航到的路由信息
@@ -221,7 +220,7 @@ export class Link extends React.Component {
         BaseComponent: props => <a {...props} />
     }
 
-    onClick(e) {
+    onClick = (e) => {
         // 确保使用者传进来的 onClick 和此 component 传给 BaseComponent 的 onClick 回调都能被调用
         if(this.props.onClick) this.props.onClick(e)
 

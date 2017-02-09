@@ -167,10 +167,10 @@ export function reduxState(getOptions) {
                             obj[name] = function loggedActionCreatorWrap(...args) {
                                 /*
                                 在这里，this 有可能是 component instance，也有可能不是。
-                                如果使用者对 action creator 应用了 bindCallbacks decorator，在调用它时，就无需确保 this 必须指向 component instance，
+                                如果使用者为 action creator 绑定了 this，在调用它时，就无需确保 this 必须指向 component instance，
                                 此时，this 就很可能是其他的什么值，这对 method 的运行不会带来任何影响。
 
-                                但也有可能 action creator 没有应用 bindCallbacks，那么在调用时就必须确保 this 指向 comopnent instance。
+                                但也有可能 action creator 没有绑定 this，那么在调用时就必须确保 this 指向 comopnent instance。
 
                                 无论是上面哪种情况，这里都应该把接收到的 this 原样传递给 action creator。
                                 也就是让使用者自己控制 action creator 要不要预先绑定 this，以及调用 action creator 时要不要控制 this，此 wrapper 不做干涉。

@@ -1,5 +1,5 @@
 import React, { PropTypes } from 'react'
-import { enhanceProps, reduxState, bindCallbacks, timer } from 'component'
+import { enhanceProps, reduxState, timer } from 'component'
 import { isEmpty, isEqual, has, get, setWith, isPlainObject, pick } from 'lodash'
 import { immuSet, immuDel, subtract, setWithObj } from 'lang'
 import { scopeForEach, scopeSymbol } from './scopeStruct'
@@ -28,7 +28,6 @@ this.state.xxx              state
 }))
 @timer
 @enhanceProps
-@bindCallbacks('setValue', 'batchSetValues', 'submit', 'formOnSubmit')
 export class Form extends React.Component {
     static propTypes = {
         // 此 form 的标识，必须整个应用内独一无二
@@ -279,7 +278,7 @@ export class Form extends React.Component {
     // latestValidValues: 若有值，说明是由 submitWhenValid 功能触发的提交。
     // 会将这个额外的值传给 onSubmit() 回调。
     // （之所以不直接读取 this.form.latestValidValues 进行传递，是因为此时那个值已经更新过，和当前 this.extractValues() 是同一个值了）
-    submit(latestValidValues=undefined) {
+    submit = (latestValidValues=undefined) => {
         // 只在用户提供了 onSubmit 回调的情况下触发 submit 行为
         if(!this.props.onSubmit || this.state.status === INVALID) return
 
@@ -426,7 +425,7 @@ export class Form extends React.Component {
     }
 
     // values: [[path, value], ...]
-    batchSetValues(values) {
+    batchSetValues = (values) => {
         this.batchedUpdates(() => {
             for(const [path, value] of values) {
                 this.setValue(path, value)
@@ -434,7 +433,7 @@ export class Form extends React.Component {
         })
     }
 
-    setValue(path, value) {
+    setValue = (path, value) => {
         const { hasFocus } = get(this.state.fields, path)
         this.batchedUpdates(() => {
             this.cancelSubmit()
@@ -653,7 +652,7 @@ export class Form extends React.Component {
 
     // ========== form ==========
 
-    formOnSubmit(event) {
+    formOnSubmit = (event) => {
         event.preventDefault()
         this.submit()
     }
