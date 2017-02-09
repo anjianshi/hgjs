@@ -15,7 +15,7 @@
  */
 
 import jparam from 'jquery-param'
-import { Promise } from './promise'
+import { Promise } from 'promise'
 import { get } from 'lodash'
 
 export class Request {

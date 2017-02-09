@@ -1,3 +1,8 @@
+/*
+对 bluebird 的 Promise 进行定制。
+
+App 使用 Promise 时，建议从这里引入，而不是直接从 bluebird 处引入。
+*/
 import { Promise } from 'bluebird'
 
 Promise.config({
