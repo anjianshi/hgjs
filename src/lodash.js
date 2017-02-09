@@ -33,6 +33,3 @@ export sumBy from 'lodash/sumBy'
 export toPairs from 'lodash/toPairs'
 export transform from 'lodash/transform'
 export values from 'lodash/values'
-
-// internal use only
-export _baseFlatten from 'lodash/_baseFlatten'
