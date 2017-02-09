@@ -8,7 +8,7 @@
     "dev-compile": "yarn run prepare-compile && yarn run install-deps && yarn run raw-compile -- $1",
     "watch": "yarn run dev-compile -- --watch",
     "prod-compile": "yarn run prepare-compile && NODE_ENV=production yarn run raw-compile",
-    "publish": "yarn run prod-compile && cd dist && yarn publish",
+    "publish": "yarn run prod-compile && cd dist && npm publish",
 
     "clean": "rimraf dist && mkdir dist",
     "dist-package-json": "cp src/package.json dist/package.json",
