@@ -7,8 +7,6 @@
  * - 不支持跨域 / JSONP；不支持 sync 请求
  * - 浏览器支持到 IE11（主要是 IE9 不支持 FormData；对于 IE10 现在其实并没有看到用到哪些它不支持的功能，所以其实可能也是支持的）
  *
- * 一般情况下不应直接使用此库，而应该使用封装了更多细节的 API()
- *
  * XMLHTTPRequest 相关资料：
  * https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest
  * https://developer.mozilla.org/en-US/docs/AJAX/Getting_Started
