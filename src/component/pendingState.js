@@ -21,12 +21,14 @@ React 并不保证连续的多次 setState() 一定会被合并执行。
 在目前的实现里，貌似只有事件回调中的多次 setState() 会被合并，其他情况下，每次 setState() 都会立刻触发更新（并调用 render()）。
 包括在事件回调里构建出来的 Promise，因为它会开辟一个独立的事件流，所以在其中连续执行的多次 setState() 也是每次都会立刻触发一次更新。
 
-对于确实希望多次 setState() 可以被合并处理的情况，此 hoc 提供了一个 batchedUpdates() 方法。
+对于确实希望多次 setState() 可以被合并处理的情况，此 decorator 提供了一个 batchedUpdates() 方法。
 它和 ReactDOM 提供的 unstable_batchedUpdates() 类似，但在不支持 DOM 的环境下也能使用。
 把一个回调函数传给它，在这个函数内执行的多次 setState() 能够确保被合并处理。
 */
 export function pendingState(Component) {
     class WithPendingState extends Component {
+        static displayName = Component.displayName || Component.name
+
         constructor(props) {
             super(props)
 
@@ -35,7 +37,7 @@ export function pendingState(Component) {
             this.stateNeedFlush = false
         }
 
-        // 与 react 原生的此方法相比，不支持 callback 参数
+        // 与 React 原生的此方法相比，不支持 callback 参数
         setState(updates) {
             if(typeof updates === 'function') {
                 updates = updates(this.pendingState, this.props)
@@ -67,6 +69,5 @@ export function pendingState(Component) {
             }
         }
     }
-    WithPendingState.displayName = Component.displayName
     return WithPendingState
 }

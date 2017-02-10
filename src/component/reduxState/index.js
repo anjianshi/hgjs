@@ -1,26 +1,33 @@
 import { connect } from 'react-redux'
-import { enhanceProps } from './enhanceProps'
+import { enhanceProps } from '../enhanceProps'
+import { reducerNode, bindStore, getState, setState } from './reducer'
+import { parseOptions } from './options'
+import { wrapActionCreator as WrapWithLogger } from './loggingAction'
 
 /*
 用 redux store 来存储 component state
 对 state 的操作方法和原生的 component local state 类似。
-注意：此 HoC 会覆盖 component 自带的 this.state 和 this.setState。
+注意：此 decorator 会覆盖 component 自带的 this.state 和 this.setState。
 
-此 Hoc 提供的功能：
-1. cache state。因为在使用 redux store 的情况下，只要不明确清除，state 就会一直留着，所以这个功能很容易实现。
+此 decorator 提供的功能：
+1. cache state。
+   因为在使用 redux store 的情况下，只要不明确清除，state 就会一直留着，所以这个功能很容易实现。
    并且因为 state cache 都统一存放在 redux store 这个单点下，很容易进行持久化。
 2. this.state 是实时更新的，不象 component local state 那样有 transaction 的问题；也不象直接使用 react-redux 的 connect() 那样，
    要等下一次渲染才能通过 props 读取到新 state。
 3. 由使用者计算出一个 key 来作为 state 存储在 redux store 中的节点，当这个 key 变化时，自动清除当前 state，从新的节点读取 state。
 
-此 HoC 提供的功能和 pendingState 类似。
+此 decorator 提供的功能和 pendingState 类似。
 它比 pendingState 多提供了一个 cache 功能。除了能在 unmount 的情况下保留 state 外，
 在需要缓存整个应用的状态时（例如 App 被转入后台），还能做到把处于 mount 状态的 component 的 state 也缓存起来。
-与此对应缺点是，必须提供一个独一无二的 key 来存储 state。
+与此对应的缺点，是必须提供一个独一无二的 key 来存储 state。
 因此，在需要缓存 state 的情况下，应使用这个 HoC；如果不需要，则可以使用 pendingState。
 
-**注意！** 因为此 HoC 使用了 react-redux 的 connect()，而 connect() 是一个包裹式而不是继承（extends）式的 HoC，
-其他所有继承式的 HoC 应该放在这个 HoC 的前面（下面），不然可能无法正常运行。
+**注意！**
+此 decorator 使用 react-redux 的 connect() 包裹住了实际生成的 component
+因此，其他在此之上的 decorator，它们应用的对象就都变成了 connect() component 而不是 app component。
+这在大部分情况下不是我们想要的。
+因此，其他 decorator 都应放在这个 decorator 的前面（下面），不然可能无法正常运行。
 例如无法读取原 component 中定义的 method，也无法向 component class 中新增 method。
 
 
@@ -49,32 +56,31 @@ cache
 
 接口：
 reduxState.bindStore(store)
-    使用此 HoC 前必须先调用此方法进行初始化。其中 store 必须是 dynamicStore（可以是 reducerHost）
+    使用此 HoC 前必须先调用此方法进行初始化。其中 store 必须是 hgjs/store/dynamicStore（可以是 reducerHost）
 
 this.state
     当前 state。此值永远是最新的 state，不会有延迟的问题，详见下面。
-    目前在 constructor() 无法读取此值
+    目前在 constructor() 里无法读取此值
 
 this.setState(updates)
-    和 react 原生的 this.setState() 类似，但不支持 callback 参数，updates 也不能是函数，只能是 object。
+    和 React 原生的 this.setState() 类似，但不支持 callback 参数，updates 也不能是函数，只能是 object。
     执行 this.setState() 后，可以立刻在 this.state 中读取到最新的内容。这点和原生的以及默认使用 redux（配合 connect()）时都不一样。
-    要注意这一特性是否会带来潜在的问题：例如在 render() 中过早的读取到了原本还不应该读到的内容。
+    使用时要注意这一特性是否会带来潜在的问题：例如在 render() 中过早的读取到了原本还不应该读到的内容。
 
 this.batchedUpdates(callback)
     如果想要确保多次 this.setState() 只触发一次重新渲染，可以把他们包裹在一个回调函数里传给此方法。
-    此方法会等到回调函数结束后，再把里面对 state 所做的更改一次性写入到 redux store 中。
+    此方法会等到回调函数结束后，才把里面对 state 所做的更改一次性写入到 redux store 中。
 
 this.resetState()
     将 comopnent state 还原回 initialState 的状态
 
 this.action_xxx
-    所有需要执行 this.setState() 的方法都应以此格式命名。以便提供更有意义的日志信息。
+    所有需要执行 this.setState() 的方法都应以此格式命名。此 decorator 会为这类方法便提供更有意义的日志信息。
     不然看不出每次更新都是从哪里发起的。
 
 componentDidLoadState、 componentWillClearState
     新增了两个会在初始化 / 切换 / 清除 state 时调用的 lifecycle method。
 */
-
 export function reduxState(getOptions) {
     if(typeof getOptions !== 'function') {
         const options = getOptions
@@ -82,6 +88,8 @@ export function reduxState(getOptions) {
     }
 
     // symbols
+    // react-redux 的 connector 必须返回 plain object，不能带有无法序列化的 Symbol() 对象。
+    // 因此这些  symbols 都采用 string 的格式。
     const _options = 'reduxState_options'
     const _state = 'reduxState_state'
     const _inBatchContext = 'reduxState_inBatchContext'
@@ -97,6 +105,9 @@ export function reduxState(getOptions) {
         const options = parseOptions(getOptions, ownProps)
         return {
             [_options]: options,
+            // 为保证与此 component 相关的 state 发生更新时，此 component 会重新渲染，这里必须把 state 也输出出去。
+            // 即使它并不会被用到。
+            // 见 `doc/React 及 react-redux re-render 机制.adoc`
             [_state]: getState(options.key),
             ...options.connector(state, ownProps)
         }
@@ -163,21 +174,7 @@ export function reduxState(getOptions) {
                 while(obj !== null) {
                     for(const name of Object.getOwnPropertyNames(obj)) {
                         if(name.startsWith('action_') && typeof obj[name] === 'function') {
-                            const origMethod = obj[name]
-                            obj[name] = function loggedActionCreatorWrap(...args) {
-                                /*
-                                在这里，this 有可能是 component instance，也有可能不是。
-                                如果使用者为 action creator 绑定了 this，在调用它时，就无需确保 this 必须指向 component instance，
-                                此时，this 就很可能是其他的什么值，这对 method 的运行不会带来任何影响。
-
-                                但也有可能 action creator 没有绑定 this，那么在调用时就必须确保 this 指向 comopnent instance。
-
-                                无论是上面哪种情况，这里都应该把接收到的 this 原样传递给 action creator。
-                                也就是让使用者自己控制 action creator 要不要预先绑定 this，以及调用 action creator 时要不要控制 this，此 wrapper 不做干涉。
-                                不过因为此 wrapper 本身的运行需要用到 component instance，所以额外建立了一个 self 变量，对于 wrapper 自身，使用这个变量而不是 this。
-                                */
-                                return loggedActionCreator.call(this, self, self.props[_options].key, origMethod, name, ...args)
-                            }
+                            obj[name] = WrapWithLogger(self, self.props[_options].key, name, obj[name])
                         }
                     }
                     obj = Object.getPrototypeOf(obj)
@@ -214,91 +211,4 @@ export function reduxState(getOptions) {
     }
 }
 
-// ===============================
-
-const defaultOptions = {
-    key: undefined,
-    initialState: {},
-    cache: false,
-
-    connector: () => ({}),
-}
-
-function parseOptions(getOptions, props) {
-    const options = getOptions(props)
-    if(!options.key.indexOf('/') === -1) throw new Error('reduxState: key 中不能包含 "/" 字符')
-    if('initialState' in options && options.initialState === undefined) throw new Error('reduxState: initialState 不允许明确指定为 undefined')
-
-    Object.keys(options).forEach(key => {
-        if(!(key in defaultOptions)) throw new Error('错误的 options key: ' + key)
-    })
-
-    return {...defaultOptions, ...options}
-}
-
-
-const style = 'color: #165be3;'
-let no = 1
-
-function loggedActionCreator(componentInstance, key, origMethod, methodName, ...args) {
-    const com = componentInstance
-
-    // 通过这个 no 可以跟踪 action 的发生顺序。
-    // 当 action 中出现嵌套时，如 action a 调用 action b，因为 action b 会比 action a 先结束，所以它的日志信息也会先出现
-    // 这样一来 action 之间究竟是谁先运行的就搞不清楚了，这时就可以根据这个 no 来判断。
-    const currNo = no++
-
-    const date = new Date()
-    const timeStr = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds()
-
-    const prevState = {...com.state}
-    const result = origMethod.apply(this, args) // eslint-disable-line no-invalid-this
-
-    console.groupCollapsed(`%c${currNo} localAction @ ${timeStr} ${key} :: ${methodName}`, style)
-    console.debug('arguments', ...args)
-    // 因为 React 的 state 并不是实时更新的，所以 prev / current  state 不一定能反应此时的真实情况
-    console.debug('prev state', prevState)
-    console.debug('current state', com.state)
-    console.groupEnd()
-
-    return result
-}
-
-// ===============================
-
-// { updates, replace }
-// key 是要更新的 component 的 state 在 store 里挂载的节点名
-// replace 若为 true，会用 updates 整个替换原来的 state
-//
-// 为便于查看日志，使用时，需要把 key 附加到 ACTION_PREFIX 后面，而不是通过 action object 来传递。
-// 此外，还允许在 key 后面再额外附加其他信息
-const ACTION_PREFIX = 'REDUX_STATE/'
-
-function reduxStateReducer(state={}, action) {
-    if(action.type.startsWith(ACTION_PREFIX)) {
-        const key = action.type.split('/')[1]
-        return {
-            ...state,
-            [key]: action.replace ? action.updates : {
-                ...state[key],
-                ...action.updates
-            }
-        }
-    }
-    return state
-}
-
-let reducerNode
-
-reduxState.bindStore = function bindStore(store) {
-    reducerNode = store.registerReducer('reduxState', reduxStateReducer)
-}
-
-function getState(key) {
-    return reducerNode.getState()[key]
-}
-
-function setState(key, updates, by=null, replace=false) {
-    const action = ACTION_PREFIX + key + (by ? '/' + by : '')
-    reducerNode.dispatch({ type: action, updates, replace })
-}
+reduxState.bindStore = bindStore

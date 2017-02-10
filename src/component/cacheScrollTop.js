@@ -3,7 +3,7 @@ const baseStateKey = '_cachedScrollTop'
 /*
 缓存 component 中指定元素的滚动条位置，并在下次 mount 时进行还原。
 
-此 component 必须和 reduxState HoC 搭配使用，且 cache 必须设为 true。此 HoC 应放到 reduxState 的前面（下面）
+此 component 必须和 reduxState decorator 搭配使用，reduxState 的 cache 需要设为 true，且将此 decorator 放到 reduxState 的前面（下面）。
 如果有多个元素都需要控制滚动条，可以使用多次，但要为每个元素指定不重复的 extraKey。
 
 getTargetRef(componentInstance): elementRefToScroll || falsy

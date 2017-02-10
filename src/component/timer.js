@@ -1,8 +1,10 @@
 /*
-向 component 提供 setTimeout 和 setInterval 方法，并在 component unmount 时自动移除未结束的 timeout 和 interval
+向 component 提供 setTimeout 和 setInterval 方法，并在 component unmount 时移除未结束的 timeout 和 interval
 */
 export function timer(Component) {
     class WithTimer extends Component {
+        static displayName = Component.displayName || Component.name
+
         componentWillMount() {
             this.timeoutIds = []
             this.intervalIds = []
@@ -29,6 +31,5 @@ export function timer(Component) {
             return id
         }
     }
-    WithTimer.displayName = Component.displayName || Component.name
     return WithTimer
 }

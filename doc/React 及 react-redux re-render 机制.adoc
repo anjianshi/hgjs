@@ -1,0 +1,78 @@
+以下所有讨论都未涉及 context，这方面以后如有需要再另行研究。
+
+
+= React 会在什么情况下重新渲染一个 component
+
+在未实现 shouldComponentUpdate 的情况下：
+. 上级 component 重新渲染
+. component 执行了 setState()（无论实际上 state 的内容是否发生了变化）
+
+component 接收到的 props 发生更新的情况也归为上面第一种情况， +
+因为只有上级 component 重新渲染，才有可能把新的 props 传给下级。
+
+在实现了 shouldComponentUpdate 的情况下： +
+会在 shouldComponentUpdate() 返回 true 时重新渲染。 +
+shouldComponentUpdate() 本身，会在上面列出的情况下被调用。
+
+
+== React 的 transaction 机制对渲染的影响
+React 有一个 transaction 机制，*在同一个事件上下文内* 触发的多次 re-render 会被合并到一起，实际上只会重新渲染一次。
+例如在一个事件回调里连续执行多次 setState()，只会进行一次重新渲染。
+但如果跳出了事件上下文，例如在 setTimeout() 或 Promise 内连续多次 setState()，则每次调用都会进行一次重新渲染。
+
+
+== 其他能够影响 component 渲染时机的工具
+现有的类库提供了一些工具，能够影响 component 的渲染时机， +
+有时是避免不必要的渲染；有时是额外增加会导致渲染的时机。 +
+下面列出了常见的这两工具。
+
+=== 1. React.PureComponent
+https://facebook.github.io/react/docs/react-api.html#react.purecomponent
+
+此工具通过对 shouldComponentUpdate() 的实现，能避免不必要的渲染。 +
+继承自它的 component，只会在 props 及 state 发生改变时重新渲染。 +
+也就是说：
+. 即使上级 component 重新渲染了，只要它传给此 component 的 props 没有变，此 component 就不会重新渲染
+. 若执行 setState() 实际上并没有改变 state 的内容，也不会导致重新渲染。
+
+此工具执行相等性检查时是基于 shallow equals。 +
+也就是对于引用类数据，引用相同就视为相同，只要引用不同，即使内部元素是相同的，也视为不同。
+
+=== 2. react-redux 的 connect()
+connect() 接收一系列函数，它们负责从 redux state、props 等渠道中提取、整理出真正需要传给 component 的数据，这些数据会以 props 的形式传给 component。
+
+每当 redux store 或上级 component 传给此 component 的 props 发生更新，它就调用这些函数，重新计算实际要传给 component 的 props。 +
+在此之上，它会像 PureComponent 那样，对 props 进行检查，只在 props 的内容发生更新时，触发重新渲染。
+
+connect() 进行检查时，也是基于 shallow equals。 +
+因此上面提到的那些函数要注意，它们每次被执行时，只有顶层的那个对象是可以每次都重新构建的，里面的那些对象一定要尽可能沿用原来的，因为构建新对象会被认为是值发生了变化。 +
+如果一个函数每次都对内部的对象也进行重新构建，结果即使每次 connect() 都会认为值发生了更新，需要重新渲染。
+
+==== dispatch() 会如何触发 re-render
+通过调用 react-redux 提供的 dispatch() 函数，可以更新 store，进而触发重新渲染。
+
+连续多次执行 dispatch() 和多次执行 setState() 效果一样：在事件上下文内，只会进行一次渲染；否则，每次执行都会导致一次渲染。
+
+若是在 componentWillMount() 和 componentWillReceiveProps() 内进行 dispatch()， +
+其对 redux store 的更新并不影响当前的这次渲染，而是会额外触发一次渲染。 +
+这点就和 React 的 setState() 的效果不一样了。在这两个回调内进行 setState() 是不会额外触发一次渲染的，而是会让当前的这次渲染使用经过 setState() 更新后的 state。 +
+这样是很正常的，因为对 store 的更新只会通过传递新 props 的形式反映出来；不像 component 内部的 state，必须等当前的 render 进行完，才能继续处理新 props。
+
+根据上面的规律，我们应该注意，每当我们要在 componentWillMount() 或 componentWillReceiveProps() 里执行 dispatch() 操作时， +
+都应该好好考虑一下：这些操作是不是应该放在这。
+因为在这些地方执行 dispatch()，很可能意味着当前执行了一次没有用的 render：当前正在进行的 render 刚渲染出来就要被废弃，通过 dispatch() 对 store 进行更新、新的 props 传下来后，又得再执行一次 render。
+对于这样的情况，可以考虑一下，可否在 reducer 的层面，提前把要进行的更新都弄好，这样就不用再通过 dispatch 来执行更新了。
+（如果 dispatch() 的内容更新的是与当前 component 无关的 state，则无所谓，因为这并不会再次触发此 component 的 render）
+
+
+== componentWillReceiveProps() 与 render() 的调用时机
+从定义上来讲， componentWillReceiveProps() 应该是在上级传给 component 的 props *有可能* 发生变化时被调用。 +
+之所以是“有可能”，是因为 React 并不会去检查 props 到底变化了没有，所以它也不知道它有没有变，它也就只好在所有有可能使得 props 发生变化的情况下都调用此方法。 +
+基本上，这也就是说只要上级 comopnent 重新渲染，就会调用子 comopnent 的 componentWillReceiveProps() 方法。 +
+如果 component 未使用 PureComponent 及 connect() 等工具，还会进一步触发 render()。
+
+在继承了 PureComponent 的情况下，虽然它能保证在 props 没有变化时不会重新渲染， +
+但因为它是基于 shouldComponentUpdate()，并不会对 componentWillReceiveProps() 产生影响，它还是会在 props 并没有变化的情况下被调用。
+
+connect() 因为是一个 HoC，它做得更彻底，只要实际要传给 component 的 props 没有变化， +
+componentWillReceiveProps() 和 render() 就都不会被调用。
