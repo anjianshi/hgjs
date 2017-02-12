@@ -35,15 +35,20 @@ options:
 - 若请求出现错误或超时，它会以 rejected 的形式结束，返回 RequestError 错误；
 - 通过 promise.finally(fn) 可以指定一个在 resolved 或 rejected 状态下皆会被调用的回调。它可以用来进行一些收尾工作。
 - 通过 promise.cancel() 方法可以手动终止请求，这种情况下，then() 或 catch() 回调都不会被调用，但 finally() 回调仍会被调用。
+
+注意：无论是因超时而结束请求，还是用户手动结束请求，都不会真的结束 HTTP 连接，只是这个 Promise 将会被结束。
+这是因为结束连接（xhr.abort()）这样的行为是没有保障的。
+我们无法保证在我们执行它的时候，后端是否已经接收到请求并开始处理，也无法保证我们断开连接后，后端会不会继续处理。
+因此，干脆抛弃它。不然，它反而会干扰我们的决策，让我们以为执行了它就能让正在进行的操作被取消。
+与其这样想，不如把我们的应用设计成即使操作没被取消也没问题。例如即使一个操作被重复执行了两次也不会出错。
 */
 export function makeRequest(url, options={}) {
     const opt = formatOptions(url, options)
 
-    let resolve, reject, onCancel
-    const promise = new Promise((_resolve, _reject, _onCancel) => {
+    let resolve, reject
+    const promise = new Promise((_resolve, _reject) => {
         resolve = _resolve
         reject = _reject
-        onCancel = _onCancel
     })
 
     const xhr = new XMLHttpRequest()
@@ -51,9 +56,9 @@ export function makeRequest(url, options={}) {
     // 只要请求成功结束，即使 status code 不是 200，浏览器也会认为是成功结束；但对我们来说，应该将它视为请求失败
     xhr.addEventListener('load', () => complete(xhr.status === 200 ? 'success' : 'error'))
     xhr.addEventListener('error', () => complete('error'))
-    // 这里没有注册 abort 事件的回调。abort 的后续行为皆由执行 abort 的那个地方自行处理。
 
-    // 发送请求。若指定了 timeout 和 attempts，当请求超时时会再次调用此方法重新发起请求。
+    // 发送请求
+    // 若指定了 timeout 和 attempts，当请求超时时还会调用此函数重新发起请求。
     function send() {
         xhr.open(opt.method, opt.url)
         for(const [name, value] of Object.entries(opt.headers)) xhr.setRequestHeader(name, value)
@@ -70,20 +75,16 @@ export function makeRequest(url, options={}) {
         }
     }
 
-    onCancel(() => xhr.abort())
-
     if(opt.timeout) {
         var alreadyAttempts = 1
         const intervalId = setInterval(() => {
-            xhr.abort()
-
             if(alreadyAttempts < opt.attempts) {
                 // 尝试重新发起请求
                 alreadyAttempts++
                 send()
             } else {
                 // 已达到重试次数，不再重新发起请求，以 error 的形式结束。
-                complete('error');
+                complete('error')
             }
         }, opt.timeout)
         promise.catch(() => {}).finally(() => clearInterval(intervalId))
