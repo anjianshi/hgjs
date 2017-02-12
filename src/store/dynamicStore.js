@@ -14,7 +14,7 @@ dynamic store 主要有两个作用：
 2. 各个子模块不用再关心自己被挂载到 store 的什么地方。
 现在每个 reducer 的挂载点信息都由 store / host 来维护，各个子模块自身无需知道自己被挂载到什么地方。
 当它需要获取自身的 state 时，直接调用 reducerHost 以及 reducerNode 提供的 getState() 方法即可。
-尤其是像 common/lib/ 或 common/components/ 下的各个组件，它们不用再要求所有前端模块都将它们定义在 store 中的同一个节点上，或是在挂载完成后将实际的挂载点告诉它们。
+尤其是各类公共组件，它们不用再要求使用者在使用它们时非得把它们挂载到某个固定的节点上，或是要求在挂载完成后将实际的挂载点告诉它们。
 这些信息都改成了在一级一级的 reducer host 内部流动，对终端 reducer 来说，是透明的。
 （原来获取 state 方式并没有因此而无效，依然可以正常使用）
 
@@ -52,6 +52,10 @@ reducerNode 接口：
     dispatch()
         store.dispatch 的快捷方式
 
+    connect()
+        使用方式和 react-redux 的 connect() 一样，但是传给 mapStateToProps 回调的参数内容发生了改变：
+        mapStateToProps(nodeState, fullState, [ownProps])
+
 
 
 # 范例
@@ -86,17 +90,11 @@ host1.dispatch({type: "add})
 store.getState()    // 返回：{money: xxx, host1: { number: 2 }, host2: { message: xxx, time: xxx }}
 host1.getState()    // 返回：{number: 2}
 node.getState()     // 返回：2
-
-
-# 注释
-现在 reducerHost 通过返回一个 getState() 函数来让各子节点能够取得自己的 state
-这样的好处是方便，但缺点是各子节点使用 react-redux 的 connect() 函数时，没法从接收到的 state 对象提取出自己的 state，只能也是调用 getState()。
-这样的调用应该不至于影响性能，但不是很直观。
-
 */
 
 
 import { createStore } from 'redux'
+import { connect as OrigConnect } from 'react-redux'
 
 function emptyReducer(state={}) {
     return state
@@ -166,9 +164,25 @@ export function createReducerHost() {
 
         reducers = {...reducers, [name]: reducer}
         onUpdate()
+
+        function connect(...args) {
+            if(args.length && typeof args[0] === 'function') {
+                // react-redux 的 connect() 处理 mapStateToProps 时，根据其参数数量会有不同的行为
+                // 因此这里重新创建的 mapStateToProps 函数要模拟原函数的参数数量
+                // 判断依据见 https://github.com/reactjs/react-redux/blob/master/docs/api.md#the-arity-of-mapstatetoprops-and-mapdispatchtoprops-determines-whether-they-receive-ownprops
+                const origMapStateToProps = args[0]
+                const mapStateToProps = origMapStateToProps.length === 1
+                        ? state => origMapStateToProps(getState()[name], state)
+                        : (state, ownProps) => origMapStateToProps(getState()[name], state, ownProps)
+                args[0] = mapStateToProps
+            }
+            return OrigConnect(...args)
+        }
+
         return {
             getState: () => getState()[name],
             dispatch,
+            connect,
         }
     }
 
