@@ -33,4 +33,5 @@ export { reduxState } from './reduxState'
 export { pendingState } from './pendingState'
 export { cacheScrollTop } from './cacheScrollTop'
 export { timer } from './timer'
-export { hosted } from './hosted'
+export { makePromiseHost, hosted } from './promiseHost'
+
