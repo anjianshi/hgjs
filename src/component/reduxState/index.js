@@ -1,6 +1,6 @@
 import { connect } from 'react-redux'
 import { enhanceProps } from '../enhanceProps'
-import { reducerNode, bindStore, getState, setState } from './reducer'
+import { reducerNode, getState, setState } from './reducer'
 import { parseOptions } from './options'
 import { wrapActionCreator as WrapWithLogger } from './loggingAction'
 
@@ -30,6 +30,8 @@ import { wrapActionCreator as WrapWithLogger } from './loggingAction'
 因此，其他 decorator 都应放在这个 decorator 的前面（下面），不然可能无法正常运行。
 例如无法读取原 component 中定义的 method，也无法向 component class 中新增 method。
 
+使用此 component 前需要先初始化 init/libReducerHost。
+
 
 参数：
 options: object || (props) => object
@@ -55,9 +57,6 @@ cache
 
 
 接口：
-reduxState.bindStore(store)
-    使用此 HoC 前必须先调用此方法进行初始化。其中 store 必须是 hgjs/store/dynamicStore（可以是 reducerHost）
-
 this.state
     当前 state。此值永远是最新的 state，不会有延迟的问题，详见下面。
     目前在 constructor() 里无法读取此值
@@ -210,5 +209,3 @@ export function reduxState(getOptions) {
         return ReduxConnected
     }
 }
-
-reduxState.bindStore = bindStore

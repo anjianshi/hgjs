@@ -2,13 +2,15 @@ import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { pick, isEqual } from 'lodash'
 import { extraProps } from 'component'
+import { libReducerHost } from 'init'
 
 
 /*
 简易的 navigator（router）
 可用于需要 router，但不需要浏览器地址栏及 History API 支持的地方。例如 Electron 以及 ReactNative app。
 
-此 component 必须搭配 hgjs 的 dynamicStore 使用。且一个 app 中只能有一个 Navigator。
+使用此 component 前需要先初始化 init/libReducerHost。
+一个 app 中只能有一个 Navigator。
 
 使用方法：
 1. 用 <Navigator> 包裹 app 的根 component，并把 react-redux 的 <Provider> 包裹在 <Navigator> 外面
@@ -23,23 +25,21 @@ import { extraProps } from 'component'
 */
 
 
-let reducerNode, options
+let options
 
 
 // ========== reducer ==========
 
-const ACTION_PREFIX = 'COM_NAVIGATOR/'
-
 // { to: path, data }
-const GO = ACTION_PREFIX + 'GO'
+const GO = 'GO'
 
 // { fallback: bool }
 // 若 fallback 为 true（默认），则当历史记录里已经没有上一条，无法再 back 回去时，会跳转到 defaultPath；
 // 否则，执行 BACK 不会有任何行为
-const BACK = ACTION_PREFIX + 'BACK'
+const BACK = 'BACK'
 
 // { to: path, data }
-const REPLACE = ACTION_PREFIX + 'REPLACE'
+const REPLACE = 'REPLACE'
 
 function navigatorReducer(state=null, action) {
     if(!state) {
@@ -89,23 +89,22 @@ function navigatorReducer(state=null, action) {
     }
 }
 
-function bindStore(store) {
-    reducerNode = store.registerReducer('com_navigator', navigatorReducer)
-}
+const { getState, dispatch } = libReducerHost.registerReducer('hgjs.navigator', navigatorReducer)
+
 
 
 // ========== action creators ==========
 
 function go(to, data) {
-    reducerNode.dispatch({ type: GO, path: to, data })
+    dispatch({ type: GO, path: to, data })
 }
 
 function back(fallback=true) {
-    reducerNode.dispatch({ type: BACK, fallback })
+    dispatch({ type: BACK, fallback })
 }
 
 function replace(to, data) {
-    reducerNode.dispatch({ type: REPLACE, path: to, data })
+    dispatch({ type: REPLACE, path: to, data })
 }
 
 
@@ -146,10 +145,6 @@ export class Navigator extends React.Component {
 
     prepare(props) {
         options = pick(props, 'routes', 'defaultPath', 'historyLimit')
-
-        if(!reducerNode) {
-            bindStore(this.context.store)
-        }
     }
 
     render() {
@@ -158,7 +153,7 @@ export class Navigator extends React.Component {
 }
 
 
-@connect(() => reducerNode.getState())
+@connect(() => getState())
 class NavigatorRender extends React.Component {
     static propTypes = {
         children: PropTypes.node.isRequired,
