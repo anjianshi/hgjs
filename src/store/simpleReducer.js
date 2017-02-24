@@ -20,7 +20,7 @@
 
 
 = API
-registerSimpleReducer(host, key, initialState):  simpleReducerNode
+registerSimpleReducer(host, path, initialState):  simpleReducerNode
 
 simpleReducerNode:
     getState()
@@ -30,7 +30,7 @@ simpleReducerNode:
 // { updates }
 const UPDATE_STATE_ACTION = 'SIMPLE_REDUCER/UPDATE_STATE'
 
-export function registerSimpleReducer(host, key, initialState) {
+export function registerSimpleReducer(host, path, initialState) {
     function simpleReducer(state=initialState, action) {
         // 发起 action 时，允许在 UPDATE_STATE_ACTION 后附加任意内容，以对此次更新进行说明
         if(action.type.startsWith(UPDATE_STATE_ACTION)) {
@@ -39,7 +39,7 @@ export function registerSimpleReducer(host, key, initialState) {
         return state
     }
 
-    const { getState, dispatch } = host.registerReducer(key, simpleReducer)
+    const { getState, dispatch } = host.registerReducer(path, simpleReducer)
 
     // setState(updates)
     // setState(describe, updates)

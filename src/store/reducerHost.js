@@ -1,6 +1,6 @@
 /*
 redux 默认要求在创建 store 时就把所有 reducer 都定义好，
-通过此工具，可以解决这个限制，允许在 store 创建完成后再注册 reducer。
+通过此工具，可以解决这个限制，允许在创建 store 后注册 reducer。
 这样我们就可以实现：
 1. reducer 的按需加载。
 不再像之前那样必须在创建 store 时把所有 reducer 都引入进来；各个模块可以在自己被引用到时，才对自己的 reducer 进行注册。
@@ -11,27 +11,59 @@ redux 默认要求在创建 store 时就把所有 reducer 都定义好，
 尤其是各类公共组件，它们不用再要求使用者在使用它们时非得把它们挂载到某个固定的节点上，或是要求在挂载完成后将实际的挂载点告诉它们。
 
 
-reducerHost 的使用方式:
-1. 在创建 redux store 时，把 reducerHost 自身的 rootReducer 包含进去。
-2. 调用 reducerHost.bindStore()，把 store 对象及 reducerHost 的 rootReducer 在其中的挂载点信息传给它。
-3. 向 reducerHost 里注册 reducer（这一步可以在任意时刻进行，在把 host 绑定到 store 之前和之后都行）
+= 使用方式
+1. 创建 reducer host
+2. 创建 redux store 时，把 reducer host 的 rootReducer 包含进去（可以挂载到任意位置，包括挂载为 store 的根 reducer）
+3. 调用 reducerHost.bindStore()，把 store 对象和 reducer host 所处的挂载点传给它。
+4. 向 reducer host 里注册 reducer（这一步实际上可以在任意时刻进行，包括在建立 store 之前）
 
-reducerHost 也可以作为一个缓存站，在向其内注册了若干 reducer 后，并不真的将它绑定到 store 上，
-而是把它 link 到另一个 host 上（这样这个 host 上的 reducer 就会被转移过去），再把那个 host 绑定到 store 上。
+reducer host 也可以作为一个缓存站，不将它绑定到 store 上，而是把它 link 到另一个 host 上，
+这样这个 host 上的 reducer 就会被转移过去 —— 然后再把那个 host 绑定到 store 上。
+
 这在我们写工具类库时尤其有用：
-工具类库不知道使用者的 store 或 reducerHost 定义在哪个文件上，因此它没法主动调用那个 store / host 去注册自己的 reducer。
-为了解决这个问题，它就要提供一个接口，让使用者把 store / host 传递给它。
-这很麻烦，而且如果有多个 reducer，就要提供多个接口，或是另想办法实现统一注册 reducer。
-而通过 reducerHost 的 link 功能，我们可以在类库内建立一个 host，所有 reducer 都注册到它上面，
-虽然类库工具获取不到使用者建立的 host，但使用者却能直接获取到类库里建立并公开出来的 host，
+工具类库不知道使用者的 store 或 reducer host 定义在哪里，它没法主动调用那个 store / host 去注册自己的 reducer。
+于是它只好提供一个接口，让使用者把 store / host 传递给它。
+这很麻烦，而且如果有多个 reducer，就要提供多个这种接口，或是另想办法实现统一注册 reducer。
+而通过 reducer host 的 link 功能，我们可以在类库内建立一个 host，所有 reducer 都注册到它上面，
+虽然类库工具获取不到使用者建立的 host，但使用者却能获取到类库里的 host，
 只要使用者把这个 host 给 link 到自己建立的 host 上，类库里的各 reducer 就能正常运行了。
 
 reducerHost link 的具体规则：
-. 一个 host link 到另一个 host 上时，它的 reducer 都会转移到那个 host 上去，后续向这个 host 注册的 reducer 也会被注册到那个 host 上。
+(a link to b，a 的 reducer 转移到 b 上，这里我们称 a 为下级 host、b 为上级 host)
+. 执行 link 时，下级 host 的 reducer 会转移到上级 host 中去；后续向下级 host 注册的 reducer 也会被注册到上级 host 上。
 . link 完成后不能改变或取消
-. link 了另一个 host 的 host，它自身也可以继续被 link 到另一个 host 上。
-. 一个 host 可以 link 多个其他 host；但不能被多个 host 所 link。
+. 允许 a link to b -> b link to c，最终 a 和 b 上的 reducer 都会被转移到 c 上。
+. 一个 host 可以有多个下级 host；但只能有一个上级 host。
 . 一个 host 在 link 到其他 host 上后，就不能再 bind store 了；同样地，已经 bind store 的 host，就不能再被 link 到其他 host 上。
+
+
+= reducer path
+注册 reducer 时，需要指定一个 path，代表这个 reducer 的 state 应被挂载到 host 下的什么位置。
+它的形式是一个以 '.' 分隔的字符串，例如 'a.b.c'。
+
+path 在整个 reducer host 里不能重复；也不允许出现一个 path 是另一个 path 的上级的情况（path1='a.b', path2='a.b.c'）
+
+建议以 `{type}.{blongs...}.{name}` 的格式来设置 path：
+例如一个 form component 的 path 可以设置成 com.form，
+而 app 里商品详情页的一个子 component 的 path 可以设置成 view.goodsDetail.price。
+这样可以避免产生重复的 path。
+
+在存放 reducer state 时，会将 path 字符串按 '.' 拆分开，把 state 存放在对象结构下。
+例如 path 为 'a.b.c'，reducer state 就会这样存放： `{a: {b: {c: reducerState }}}`
+
+
+= dispatch action
+注册 reducer 时，会得到一个 reducerNode 对象，这个对象里有一个 dispatch() 方法，
+通过这个方法，我们可以发送一个只有当前 reducer 能接收到的 action，不用对 action type 进行任何特殊处理（例如添加前缀）。
+这样，我们就可以对 action type 进行简化，直接使用 type 内容即可。例如： ADD、LOADED，而无需设置成 'GOODS_DETAIL/ADD'
+
+但要注意一件事，因为 reducer 除了能接收到这种专门发送给它的 action，也能接收到其他所有通过 store.dispatch() 发送的公共 action。
+因此必须保证公共 action 的 action type 不会和私有的 action type 发生重复，不然 reducer 就会对本不属于它的 action 进行处理。
+可以通过给公共 action 的 type 添加前缀来解决这个问题。
+
+一般来说，建议以这样的格式定义 action type：
+全大写，若需要分段，用 '/' 作为分隔符。
+例如： 'APP/AUTH/LOGIN'
 
 
 = API
@@ -45,93 +77,92 @@ reducerHost:
     rootReducer,
         用来挂载到 redux store 里，通过它来统一管理 host 下所有 reducer 的 state
 
-    bindStore(store, mountPoint),
+    bindStore(store, mountPoint=null),
         将 rootReducer 的挂载情况告诉此 host。
-        mountPoint 应是一个数组，例如挂载位置是 { a: { b: { c: rootReducer } } }， mountPoint 就应该是 ['a', 'b', 'c']
+        mountPoint 应为一个以 '.' 分隔的字符串，例如挂载位置是 { a: { b: { c: rootReducer } } }， mountPoint 就应该是 'a.b.c'
+        若将 rootReducer 挂载为 store 的根 reducer，则 mountPoint 应为空。
 
     link(otherHost),
         把目标 host link 到此 host 上
 
-    registerReducer(key, reducer): reducerNode
+    registerReducer(path, reducer): reducerNode
         向 reducerHost 内注册一个 reducer。
-        key 在整个 app 内不能重复。
 
 reduerNode:
-    key,                此 reducer 的 key，一般用不到。
+    path,               此 reducer 的 path
     getState(),         获得此 reducer 的 state
-    dispatch(action)    向此 reducer 传递一个 action，此 action 只有当前 reducer 会接收到。
-                        若要传递一个能被所有 reducer 接收到的 action，需使用 redux store 提供的 dispatch 函数
+    dispatch(action)    向此 reducer 传递一个只有它能接收到的 action。
+                        若要传递一个能被所有 reducer 接收到的 action，应使用 redux store 提供的 dispatch 函数
 
-
-= reducer key 规范
-
-格式： {type}.{blongs...}.{name}
-
-例如一个 Form component，它的 key 可以是 com.form
-App 里某个页面的某个 component 的 key，可以是 view.goods.detail.price
-
-这样设计可以尽可能避免 key 发生重复
-
-
-= action type 要求
-基于内部实现的原因，action type 中不应出现 '::' 字样。
-
-传递能被所有 reducer 接收到的 action 时，action type 的设置一定要尽可能具体一点，不要太宽泛。
-例如设置成： AUTH/SET_USER_NAME， 而不是 set_name，不然容易导致本不应处理它的 reducer 误将它当作传给自己的 action 而给处理了。
-
-action type 应设置成全大写，这样就能和 reducer host 发起的 action 的 key 部分保持区别
 */
-import { get as lodashGet } from 'lodash'
+import { has, get, omit } from 'lodash'
+import { immuSet } from 'lang'
 
-
-const ACTION_SEP = '::'
-
-// { id: hostId, key: reducerKey, state: reducerState }
-const INIT_REDUCER_STATE_ACTION = 'REDUCER_HOST/INIT_REDUCER_STATE'
 
 let nextId = 1
 
 export function makeReducerHost() {
     const id = nextId++
 
-    // key => reducer
+    // path string => reducer
     // 之所以用 map，是因为它可以记录顺序，这样先注册的 reducer 就能先被调用
     let reducers = new Map()
 
     let self    // eslint-disable-line prefer-const
 
     function getInitialState(reducer) {
-        return reducer(undefined, { type: 'REDUCER_HOST/GET_INITIAL_STATE' })
+        return reducer(undefined, { type: '' })
     }
 
     // ------------------------------------------------
 
+    // { path: reducerPath }
+    const INIT_STATE_ACTION = `RH/${id}/INIT_STATE`
+
+    // private action format:
+    // { type: PRIVATE_ACTION_PREFIX/reducerPath/realActionType, _rh_hostId, _rh_path, _rh_type, ...actionContent }
+    // type 仅用来向 redux-logger 提供友好的输出信息，实际要用到的 action 信息通过其他属性传递
+    const PRIVATE_ACTION_PREFIX = `RHPA/`
+
+    let rootReducerInited = false
     function rootReducer(state, action) {
-        if(!state) {
-            // 若 bind store 时 host 里已经注册了 reducer，需要在此初始化它们的 state
-            state = {}  // { key: state, ... }
-            for(const [key, reducer] of reducers.entries()) {
-                state[key] = getInitialState(reducer)
+        if(!state) state = {}
+
+        // 不能根据 state 是否有值来判断 rootReducer 是否是第一次被调用
+        // 因为如果使用者实现了 state 持久化，那么一上来就是有值的。
+        if(!rootReducerInited) {
+            // 在 rootReducer 初始化时，填充当前已注册的 reducer 的 state。
+            // 即使 rootReducer 的 state 在此时已经有值（即实现了 state 持久化），也要挨个 reducer 检查一下，因为当前可能会有之前没注册过的 reducer 出现。
+            for(let [path, reducer] of reducers.entries()) {    // eslint-disable-line prefer-const
+                path = path.split('.')
+                if(!has(state, path)) {
+                    state = immuSet(state, path, getInitialState(reducer))
+                }
+            }
+            rootReducerInited = true
+        }
+
+        if(action.type === INIT_STATE_ACTION) {
+            const path = action.path.split('.')
+            if(!has(state, path)) {
+                const reducer = reducers.get(action.path)
+                state = immuSet(state, path, getInitialState(reducer))
+            }
+        } else if(action.type.startsWith(PRIVATE_ACTION_PREFIX) && action._rh_hostId === id) {
+            const reducer = reducers.get(action._rh_path)
+            if(!reducer) throw new Error(`reducerHost id=${id} 里找不到指定 reducer path=${action._rh_path}，private action 处理失败`)
+
+            const path = action._rh_path.split('.')
+            const reducerState = get(state, path)
+            const realAction = {...omit(action, 'type', '_rh_hostId', '_rh_path', '_rh_type'), type: action._rh_type}
+            state = immuSet(state, path, reducer(reducerState, realAction))
+        } else {
+            for(const [path, reducer] of reducers.entries()) {
+                const splitPath = path.split('.')
+                state = immuSet(state, splitPath, reducer(get(state, splitPath), action))
             }
         }
 
-        if(action.type === INIT_REDUCER_STATE_ACTION && action.id === id) {
-            state = {...state, [action.key]: action.state }
-        } else if(action.type.indexOf(ACTION_SEP) !== -1) {
-            const [key, type] = action.type.split(ACTION_SEP)
-            // 因为目前允许一个 store 里存在多个 reducerHost，若 reducer 没有找到，可能是因为它被注册到了其他 host 里
-            if(reducers.has(key)) {
-                const reducer = reducers.get(key)
-                const reducerState = state[key]
-                const reducerAction = {...action, type}
-                state = { ...state, [key]: reducer(reducerState, reducerAction) }
-            }
-        } else {
-            state = {...state}
-            for(const [key, reducer] of reducers.entries()) {
-                state[key] = reducer(state[key], action)
-            }
-        }
         return state
     }
 
@@ -141,7 +172,7 @@ export function makeReducerHost() {
     }
 
     let store, mountPoint
-    function bindStore(_store, _mountPoint) {
+    function bindStore(_store, _mountPoint=null) {
         checkAllowStore()
         store = _store
         mountPoint = _mountPoint
@@ -181,36 +212,45 @@ export function makeReducerHost() {
     }
 
     function getMountPoint() {
-        return belongsHost ? belongsHost._getMountPoint() : mountPoint
+        const mountPointStr = belongsHost ? belongsHost._getMountPoint() : mountPoint
+        return mountPointStr ? mountPointStr.split('.') : []
     }
 
-    function registerReducer(key, reducer) {
+    function registerReducer(path, reducer) {
         if(belongsHost) {
-            return belongsHost.registerReducer(key, reducer)
+            return belongsHost.registerReducer(path, reducer)
         } else {
-            reducers.set(key, reducer)
-
-            if(store) {
-                const state = get(store.getState(), mountPoint)
-                // 若 state 中已经有了此 key（例如因为使用者实现了 state 持久化，以前的 state 被留了下来），则不再进行填充
-                if(!(key in state)) {
-                    const reducerState = getInitialState(reducer)
-                    store.dispatch({ type: INIT_REDUCER_STATE_ACTION, id, key, state: reducerState })
+            for(const otherPath of reducers.keys()) {
+                // 不允许出现一个 path 是另一个 path 的上级的情况（path1='a.b', path2='a.b.c'）
+                // 此检查也同时保证了不会有同 path 的 reducer
+                if(otherPath.startsWith(path) || path.startsWith(otherPath)) {
+                    throw new Error(`reducerHost: reducer path 冲突 ${path}、${otherPath}`)
                 }
+            }
+
+            reducers.set(path, reducer)
+            if(store) {
+                store.dispatch({ type: INIT_STATE_ACTION, path })
             }
         }
 
         function getState() {
-            return get(getStore().getState(), [...getMountPoint(), key])
+            return get(getStore().getState(), [...getMountPoint(), ...path.split('.')])
         }
 
-        function dispatch(action) {
-            if(action.type.indexOf(ACTION_SEP) !== -1) throw new Error(`action type 里不能带有 "${ACTION_SEP}" 字符`)
-            return getStore().dispatch({...action, type: key + ACTION_SEP + action.type})
+        function dispatch(rawAction) {
+            const action = {
+                ...rawAction,
+                type: PRIVATE_ACTION_PREFIX + path + '/' + rawAction.type,
+                _rh_hostId: id,
+                _rh_path: path,
+                _rh_type: rawAction.type
+            }
+            return getStore().dispatch(action)
         }
 
         return {
-            key, getState, dispatch
+            path, getState, dispatch
         }
     }
 
@@ -227,11 +267,4 @@ export function makeReducerHost() {
         registerReducer
     }
     return self
-}
-
-// lodash.get() 在 path 为空时，会返回 undefined
-// 而对于 reducerHost，当使用者把它挂载为 store 的根 reducer 时，它的 mountPoint 确实是为空的，但此时对其获取 state，不应返回 undefined，而应返回整个 state
-function get(obj, path) {
-    if(!path || !path.length) return obj
-    return lodashGet(obj, path)
 }
