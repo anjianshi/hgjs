@@ -117,7 +117,7 @@ export function makeReducerHost() {
     // ------------------------------------------------
 
     // { path: reducerPath }
-    const INIT_STATE_ACTION = `RH/${id}/INIT_STATE`
+    const INIT_STATE_ACTION_PREFIX = `RH/${id}/INIT_STATE/`
 
     // private action format:
     // { type: PRIVATE_ACTION_PREFIX/reducerPath/realActionType, _rh_hostId, _rh_path, _rh_type, ...actionContent }
@@ -142,7 +142,7 @@ export function makeReducerHost() {
             rootReducerInited = true
         }
 
-        if(action.type === INIT_STATE_ACTION) {
+        if(action.type.startsWith(INIT_STATE_ACTION_PREFIX)) {
             const path = action.path.split('.')
             if(!has(state, path)) {
                 const reducer = reducers.get(action.path)
@@ -230,7 +230,7 @@ export function makeReducerHost() {
 
             reducers.set(path, reducer)
             if(store) {
-                store.dispatch({ type: INIT_STATE_ACTION, path })
+                store.dispatch({ type: INIT_STATE_ACTION_PREFIX + path, path })
             }
         }
 

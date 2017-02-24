@@ -28,12 +28,12 @@ simpleReducerNode:
 */
 
 // { updates }
-const UPDATE_STATE_ACTION = 'SIMPLE_REDUCER/UPDATE_STATE'
+const SET_STATE_ACTION = 'SET_STATE'
 
 export function registerSimpleReducer(host, path, initialState) {
     function simpleReducer(state=initialState, action) {
         // 发起 action 时，允许在 UPDATE_STATE_ACTION 后附加任意内容，以对此次更新进行说明
-        if(action.type.startsWith(UPDATE_STATE_ACTION)) {
+        if(action.type.startsWith(SET_STATE_ACTION)) {
             state = {...state, ...action.updates}
         }
         return state
@@ -48,7 +48,7 @@ export function registerSimpleReducer(host, path, initialState) {
             updates = describe
             describe = null
         }
-        const actionType = describe ? UPDATE_STATE_ACTION + '/' + describe : UPDATE_STATE_ACTION
+        const actionType = describe ? SET_STATE_ACTION + '/' + describe : SET_STATE_ACTION
         dispatch({ type: actionType, updates })
     }
 
