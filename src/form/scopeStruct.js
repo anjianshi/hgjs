@@ -24,7 +24,7 @@ Scope Struct
 }
 */
 
-// 为保证 form state 能进行持久化（转化成 JSON），不使用 Symbol 对象
+// 为保证 form state 能进行持久化（转换成 JSON），不使用 Symbol 对象
 export const scopeSymbol = '_scope'
 
 // 判断 scope struct 中的一个节点是 scope 还是 data
