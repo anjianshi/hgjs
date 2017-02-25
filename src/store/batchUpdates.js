@@ -49,7 +49,7 @@ export const supportBatchUpdates = () => (createStore) => (reducer, preloadedSta
 
     const listeners = new Set()     // 因为在外部获取不到 redux store 的 listener 列表，所以要自己单独记录一份
     function subscribe(listener) {
-        listeners.add(listeners)
+        listeners.add(listener)
 
         function wrappedListener() {
             if(!inBatchContext) {
