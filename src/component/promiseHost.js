@@ -1,7 +1,7 @@
 import invariant from 'invariant'
 
 /*
-在我们的 component 里经常要发起一些异步操作，并注册一些回调：当异步操作完成时，更新 redux store、component local state 或针对 component refs 执行某些操作。
+在我们的 component 里有时会发起一些异步操作，并注册一些回调 —— 当异步操作完成时，更新 redux store、component local state 或针对 component refs 执行某些操作。
 如果一个 component 在它发起的异步操作完成之前就 unmount 了，那些回调将无法正常执行，甚至会导致报错。
 因此我们需要有一个机制，保证在 component unmount 后能结束异步操作或让回调不再被触发。
 
