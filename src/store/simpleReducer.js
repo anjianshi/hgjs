@@ -26,6 +26,8 @@ simpleReducerNode:
     getState()
     setState()
 */
+import { isPlainObject } from 'lodash'
+
 
 // { updates }
 const SET_STATE_ACTION = 'SET_STATE'
@@ -34,7 +36,8 @@ export function registerSimpleReducer(host, path, initialState) {
     function simpleReducer(state=initialState, action) {
         // 发起 action 时，允许在 UPDATE_STATE_ACTION 后附加任意内容，以对此次更新进行说明
         if(action.type.startsWith(SET_STATE_ACTION)) {
-            state = {...state, ...action.updates}
+            // updates 有可能不是 object，而是 number、bool 等纯类型，此时应直接赋值
+            state = isPlainObject(action.updates) ? {...state, ...action.updates} : action.updates
         }
         return state
     }
