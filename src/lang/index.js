@@ -1,4 +1,4 @@
-import { setWith, pickBy, isPlainObject } from 'lodash'
+import { has, get, setWith, pickBy, isPlainObject } from 'lodash'
 
 export * from './immutable'
 export * from './iterable'
@@ -67,6 +67,8 @@ export function cleanObject(obj) {
 const obj = {a: 1, b: 2, c: 3, d: 4, f: 5}
 const picked = pickAs(obj, 'a', {b: 'x', c: 'y'}, 'notExist')
 // {a: 1, x: 2, y: 3}
+
+fromPath 和 toPath 都可以是 'a.b.c' 格式的 path 值，以实现深入提取
 */
 export function pickAs(obj, ...props) {
     const picked = {}
@@ -74,12 +76,18 @@ export function pickAs(obj, ...props) {
     for(const prop of props) {
         if(isPlainObject(prop)) {
             for(const [from, to] of Object.entries(prop)) {
-                if(from in obj) picked[to] = obj[from]
+                _pickTo(obj, from, picked, to)
             }
         } else {
-            if(prop in obj) picked[prop] = obj[prop]
+            _pickTo(obj, prop, picked, prop)
         }
     }
 
     return picked
+}
+
+function _pickTo(source, fromPath, target, toPath) {
+    if(has(source, fromPath)) {
+        setWithObj(target, toPath, get(source, fromPath))
+    }
 }
