@@ -1,7 +1,7 @@
 import { isFunction, clone as cloneObj, has, size, isPlainObject } from 'lodash'
 
 /*
-对 plain object / array 进行 immutable update 的工具。
+对 plain object 进行 immutable update 的工具。
 
 为什么要进行 immutable update 而不是直接修改 object？
 因为 React 的 shallowEqual 的特点是只根据引用判断两个对象是否相同，因此每当要更新对象时，必须重新生成一个对象，而不能直接修改原来的对象。
@@ -159,4 +159,4 @@ function checkArg(obj, path) {
     if(!Array.isArray(path)) throw new Error(`immutable update 的 path 参数必须是一个数组, got: ${path}`)
 }
 
-// import "./immutable.test.js"
+// import "test/lang/immutable.js"
