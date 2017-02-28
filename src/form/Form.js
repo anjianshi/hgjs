@@ -569,7 +569,7 @@ export class Form extends React.Component {
         } else if(isPlainObject(rawConfig)) {
             if(process.env.NODE_ENV === 'development') {
                 const unexpectedKeys = subtract(Object.keys(rawConfig), Object.keys(config))
-                if(unexpectedKeys.size) throw new Error('form field config 中出现了不应出现的 key: ' + [...unexpectedKeys].join(', '))
+                if(unexpectedKeys.length) throw new Error('form field config 中出现了不应出现的 key: ' + unexpectedKeys.join(', '))
             }
             Object.assign(config, rawConfig)
         }
