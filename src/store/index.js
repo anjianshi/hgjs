@@ -2,4 +2,4 @@
 
 export { makeReducerHost } from './reducerHost'
 export { registerSimpleReducer } from './simpleReducer'
-export { supportBatchUpdates } from './batchUpdates'
+export { supportBatchedUpdates } from './batchedUpdates'
