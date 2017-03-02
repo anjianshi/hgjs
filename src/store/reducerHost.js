@@ -250,7 +250,7 @@ export function makeReducerHost() {
         }
 
         return {
-            path, getState, dispatch
+            path, getStore, getState, dispatch
         }
     }
 
