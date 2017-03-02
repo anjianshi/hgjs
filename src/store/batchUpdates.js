@@ -36,7 +36,8 @@ export const supportBatchUpdates = () => (createStore) => (reducer, preloadedSta
         if(inBatchContext) callback()
 
         inBatchContext = true
-        callback()
+        // batchUpdates() 会返回 callback 的返回值
+        const returnVal = callback()
         inBatchContext = false
 
         if(needCallListeners) {
@@ -45,6 +46,8 @@ export const supportBatchUpdates = () => (createStore) => (reducer, preloadedSta
                 listener()
             }
         }
+
+        return returnVal
     }
 
     const listeners = new Set()     // 因为在外部获取不到 redux store 的 listener 列表，所以要自己单独记录一份
