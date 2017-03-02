@@ -23,8 +23,9 @@
 registerSimpleReducer(host, path, initialState):  simpleReducerNode
 
 simpleReducerNode:
-    getState()
     setState()
+    getState()
+    getStore()      // 用来执行通过 store 对象执行的功能
 */
 import { isPlainObject } from 'lodash'
 
@@ -42,7 +43,7 @@ export function registerSimpleReducer(host, path, initialState) {
         return state
     }
 
-    const { getState, dispatch } = host.registerReducer(path, simpleReducer)
+    const { getState, dispatch, getStore } = host.registerReducer(path, simpleReducer)
 
     // setState(updates)
     // setState(describe, updates)
@@ -58,5 +59,6 @@ export function registerSimpleReducer(host, path, initialState) {
     return {
         setState,
         getState,
+        getStore,
     }
 }
