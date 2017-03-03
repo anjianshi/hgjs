@@ -13,7 +13,16 @@ export class FormComponent extends React.Component {
         // 此 form 的标识，必须整个应用内独一无二
         name: PropTypes.string.isRequired,
 
-        // form component unmount 后，是否要保留 form state（form ）
+        /*
+        form component unmount 后，是否要保留 form state / instance
+
+        大部分情况下，form 不需要 cache，form component 被移除时，就让 form state 也跟着移除。
+        然后下次使用者需要使用 form component 时，再重新构建它。
+
+        个别情况下，可能确实希望保留 state，例如一个复杂的编辑型界面，用户有可能在某些字段里输入了不合法的内容，这会影响 form state。
+        如果使用者希望在离开页面并回来后，这些不合法的内容及状态也能被还原回来，那就需要 cache 整个 form 的 state。
+        因为光靠 defaultValue 是没办法还原回不合法的值的。
+        */
         cache: PropTypes.bool,
 
         // 此 component 会把经过整理的 form object 传递给 children，children 必须是一个函数。
