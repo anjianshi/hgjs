@@ -31,26 +31,19 @@ export const scopeSymbol = '_scope'
 const isScope = item => item && item[scopeSymbol]
 
 /*
-遍历 scope struct 数据，将其中的每一项 item 传给回调
-此函数会递归深入所有 scope
-
-callback(item, path: array): undefined|false
-可以通过返回 false 来停止遍历
-
-若因 callback 返回 false 而提前停止遍历，此函数也会返回 false；否则返回 undefined
+生成一个 iterator，递归遍历 scope stract 中的每一个 item
+返回的单项数据格式： { item, path }
 */
-export function scopeForEach(scope, callback, _superScopes=[]) {
-    // 通过这样的设计，使得下层的 scopeForEach 中的 callback 返回 false 时，当前层（以及更上层）的遍历也能跟着立即结束
+export function* scopeItems(scope, _superScopes=[]) {
     for(const [name, item] of toPairs(scope)) {
         // 因为 scopeSymbol 不是真正的 symbol，在遍历 scope 时它会被遍历出来，应将其跳过
         if(name === scopeSymbol) continue
 
         const path = [..._superScopes, name]
-        const result = isScope(item)
-            ? scopeForEach(item, callback, path)
-            : callback(item, path)
-        if(result === false) {
-            return false
+        if(isScope(item)) {
+            yield* scopeItems(item, path)
+        } else {
+            yield [item, path]
         }
     }
 }
