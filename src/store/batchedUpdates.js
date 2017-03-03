@@ -33,7 +33,7 @@ export const supportBatchedUpdates = () => (createStore) => (reducer, preloadedS
 
     function batchedUpdates(callback) {
         // 支持嵌套使用此方法
-        if(inBatchContext) callback()
+        if(inBatchContext) return callback()
 
         inBatchContext = true
         // batchedUpdates() 会返回 callback 的返回值
