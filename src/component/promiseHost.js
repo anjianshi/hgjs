@@ -34,8 +34,8 @@ class Com extends React.Component {
 host(promise)
 
 
-// 如果不需要在 component 外使用 host，也可以使用快捷方式： @hosted()，相当于 @makePromiseHost().bind()
-@hosted()
+// 如果不需要在 component 外使用 host，也可以使用快捷方式： @promiseHosted()，相当于 @makePromiseHost().bind()
+@promiseHosted()
 class Com extends React.Component { ... }
 */
 export function makePromiseHost() {
@@ -43,15 +43,15 @@ export function makePromiseHost() {
 
     /*
     托管一个 promise。
-        this.host(promise)
+        this.hostPromise(promise)
     或
-        this.host(func, ...args)
+        this.hostPromise(func, ...args)
         args 会被传给 func，并对 func 返回的 promise 进行托管
         若 func 返回的不是一个 promise，会报错
 
     只支持 bluebird promise，因为只有它支持 cancel。
     */
-    function host(target, ...args) {
+    function hostPromise(target, ...args) {
         const promise = typeof target === 'function' ? target(...args) : target
 
         // 不能通过 `target instanceof Promise` 来检查，因为使用者通过 npm link 引入此类库时，它使用的 bluebird 和此类库使用的可能不是同一个实例。
@@ -88,13 +88,13 @@ export function makePromiseHost() {
         invariant(!getKey || typeof getKey === 'function', 'getKey 必须是一个 function')
 
         return function decorator(Component) {
-            class Hosted extends Component {
+            class PromiseHosted extends Component {
                 static displayName = Component.displayName || Component.name
 
                 constructor(props) {
                     super(props)
 
-                    this.host = host
+                    this.hostPromise = hostPromise
                 }
 
                 componentWillReceiveProps(nextProps) {
@@ -109,15 +109,15 @@ export function makePromiseHost() {
                     clear()
                 }
             }
-            return Hosted
+            return PromiseHosted
         }
     }
 
-    host.bind = bind
-    return host
+    hostPromise.bind = bind
+    return hostPromise
 }
 
 
-export function hosted(...args) {
+export function promiseHosted(...args) {
     return makePromiseHost().bind(...args)
 }
