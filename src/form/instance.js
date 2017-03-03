@@ -36,12 +36,10 @@ export class FormBiz {
     static getInstance(name, config) {
         let instance
         if(name in FormBiz._instances) {
-            console.log('got instance')
             instance = FormBiz._instances[name]
             // 此时的 config 有可能和最后一次使用 instance 时发生了变化，所以这里要更新一下。
             instance.configUpdated(config)
         } else {
-            console.log('new instance')
             batchedUpdates(() => {
                 instance = new FormBiz(name, config)
             })
