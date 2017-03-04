@@ -29,6 +29,6 @@ function someDecorator(Component) {
 
 export * from './functions'
 export { enhanceProps } from './enhanceProps'
-export { pendingState } from './pendingState'
+export { enhanceState } from './enhanceState'
 export { makeTimerHost, timer } from './timer'
 export { makePromiseHost, promiseHosted } from './promiseHost'
