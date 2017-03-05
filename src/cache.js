@@ -1,7 +1,8 @@
 /* eslint-env browser */
 
 /*
-缓存 app 数据（例如 view component 的 state）以便以后使用（例如在 component unmount 后重新 mount 时，取回之前的 state）
+缓存 app 数据（例如 view component 的 state）以便以后使用（例如在 component unmount 后重新 mount 时，取回之前的 state）。
+数据为单次取出，即在取出后，就会把数据从 cache 中清除。
 
 cache 中的数据存储在内存里，性能更好，且允许存入不可序列化的数据（例如 Promise 对象）
 persistCache 里的数据即使关闭浏览器再打开也依然有效，但里面的数据必须能够 JSON 化。
