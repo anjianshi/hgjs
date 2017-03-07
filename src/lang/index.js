@@ -5,6 +5,7 @@ export * from './iterable'
 export * from './browser'
 export * from './money'
 export * from './shallowEqual'
+export * from './json'
 
 
 /**
