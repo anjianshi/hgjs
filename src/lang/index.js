@@ -1,6 +1,6 @@
 import { has, get, setWith, pickBy, isPlainObject } from 'lodash'
 
-export * from './immutable'
+export * from './objectImmutable'
 export * from './iterable'
 export * from './browser'
 export * from './money'

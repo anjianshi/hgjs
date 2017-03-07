@@ -27,7 +27,7 @@ const o2 = {
 o2.a.c === o1.a.c
 o2.b === o1.b
 
-以下各工具的测试用例见 test/lang/immutable.js
+以下各工具的测试用例见 test/lang/objectImmutable.js
 */
 
 
@@ -159,4 +159,3 @@ function checkArg(obj, path) {
     if(!Array.isArray(path)) throw new Error(`immutable update 的 path 参数必须是一个数组, got: ${path}`)
 }
 
-// import "test/lang/immutable.js"

@@ -8,7 +8,7 @@
   个别函数的具体情况，见函数备注。
 */
 
-import { findIndex } from 'lodash'
+import { findIndex, flatMap } from 'lodash'
 
 
 // ========== 集合处理类函数 ==========
@@ -144,6 +144,11 @@ function predicate2index(array, predicate) {
     return index
 }
 
+
+export function unionMap(...maps) {
+    const entries = flatMap(maps, map => Array.from(map.entries()))
+    return new Map(entries)
+}
 
 export function mapImmuSet(iter, key, value) {
     const m = new Map(iter)
