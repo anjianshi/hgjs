@@ -40,6 +40,7 @@ export const persistCache = {
     keyPrefix: '_hgjs_persist_',
 
     has(key) {
+        key = persistCache.keyPrefix + key
         return key in localStorage
     },
 
