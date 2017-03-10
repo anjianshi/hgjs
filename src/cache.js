@@ -53,6 +53,7 @@ export const persistCache = {
     get(key) {
         if(!persistCache.has(key)) return undefined
 
+        key = persistCache.keyPrefix + key
         const data = exParseJSON(localStorage[key])
         delete localStorage[key]
         return data
