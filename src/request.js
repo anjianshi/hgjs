@@ -14,7 +14,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpReq
 http://www.w3.org/TR/2012/WD-XMLHttpRequest-20120117/#event-xhr-load
 */
 
-import jparam from 'jquery-param'
+import { queryString } from 'lang'
 import { Promise } from 'promise'
 import { get } from 'lodash'
 
@@ -110,7 +110,7 @@ function formatOptions(url, raw) {
 
     if(raw.data) {
         if(opt.method === 'GET') {
-            url += (/\?/.test(url) ? '&' : '?') + jparam(raw.data)
+            url += (/\?/.test(url) ? '&' : '?') + queryString.stringify(raw.data)
         } else if((window.FormData && raw.data instanceof window.FormData)
                 || (window.ArrayBuffer && raw.data instanceof ArrayBuffer)) {
             opt.data = raw.data
