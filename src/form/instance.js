@@ -190,7 +190,7 @@ export class FormBiz {
 
                 state = immuSet(state, ['fields', ...path], fieldState, makeScope)
                 if(fieldState.status === TO_BE_VALID && this.state.status === VALID) {
-                    state = immuSet(state, 'status', TO_BE_CONFIRM)
+                    state = immuSet(state, ['status'], TO_BE_CONFIRM)
                 }
             }
         }
