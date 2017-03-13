@@ -95,6 +95,7 @@ export class FormBiz {
             bizRulePromise: null,
             validatingValue: null,
 
+            // 把这些内容提前在这里定义好，这样就不用每次生成 form obj 时，都重新生成 method 了
             eventHandlers: {
                 onFocus: this.widgetOnFocus.bind(null, path),
                 onChange: this.widgetOnChange.bind(null, path),
@@ -104,6 +105,9 @@ export class FormBiz {
                 // 非 web 环境下，没法通过与 input widget 交互（例如键入回车）来触发表单提交，
                 // 因此额外提供一个回调，使得 input widget 可以在适当的时机通过它来触发提交。
                 onSubmit: () => this.submit(),
+            },
+            methods: {
+                setValue: value => this.setValue(path, value),
             }
         }
     }
@@ -349,14 +353,16 @@ export class FormBiz {
 
         const fields = {}
         for(const [fieldState, path] of scopeItems(this.state.fields)) {
+            const field = get(this.fields, path)
             const data = {
                 // 这是一个辅助读取 latestValidValue 的快捷方式
                 value: fieldState.status === VALID ? fieldState.latestValidValue : undefined,
                 ...pick(fieldState, 'latestValidValue', 'status', 'message', 'hasFocus'),
+                ...field.methods,
 
                 props: {
                     value: fieldState.propsValue,
-                    ...get(this.fields, path).eventHandlers
+                    ...field.eventHandlers
                 },
 
                 valid: 'DO_NOT_USE',
