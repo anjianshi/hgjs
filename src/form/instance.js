@@ -75,12 +75,13 @@ export class FormBiz {
 
     initFormData() {
         this.form = {
-            props: {
-                onSubmit: this.formOnSubmit
-            },
             submitPromise: null,
             latestValidValues: null,
             latestPropsValues: null,
+
+            eventHandlers: {
+                onSubmit: this.formOnSubmit
+            },
         }
     }
 
@@ -90,7 +91,11 @@ export class FormBiz {
     makeFieldData(path, config) {
         return {
             config,
-            props: {
+            validateTimeoutId: null,
+            bizRulePromise: null,
+            validatingValue: null,
+
+            eventHandlers: {
                 onFocus: this.widgetOnFocus.bind(null, path),
                 onChange: this.widgetOnChange.bind(null, path),
                 onKeyPress: this.widgetOnKeyPress.bind(null, path),
@@ -99,10 +104,7 @@ export class FormBiz {
                 // 非 web 环境下，没法通过与 input widget 交互（例如键入回车）来触发表单提交，
                 // 因此额外提供一个回调，使得 input widget 可以在适当的时机通过它来触发提交。
                 onSubmit: () => this.submit(),
-            },
-            validateTimeoutId: null,
-            bizRulePromise: null,
-            validatingValue: null,
+            }
         }
     }
 
@@ -332,10 +334,12 @@ export class FormBiz {
 
     // 生成一个供使用者使用的 object，里面整合了 form instance 和 form state 信息
     getFormObj() {
+        // 目前的实现里，每次调用此函数，部分 object 都会重新生成，例如 form.props，这有可能潜在地影响性能。
+        // 之后注意观察，如果发现确实有影响，则改进此实现，对这类 object 进行 cache，使得 object 只被生成一次，以后都直接提取 cache。
         const formObj = {
-            props: this.form.props,
             ...pick(this.state, ['status', 'submitting']),
             ...pick(this, 'setValue', 'batchSetValues', 'submit'),
+            props: this.form.eventHandlers,
 
             // 提醒使用者不要沿用老 Form 的 valid 属性
             // 实际此属性也可以以 getter 的形式提供，使用者一访问就在 getter 函数里抛出异常
@@ -345,17 +349,15 @@ export class FormBiz {
 
         const fields = {}
         for(const [fieldState, path] of scopeItems(this.state.fields)) {
-            const field = get(this.fields, path)
-
             const data = {
-                props: {
-                    ...field.props,
-                    value: fieldState.propsValue,
-                },
-
                 // 这是一个辅助读取 latestValidValue 的快捷方式
                 value: fieldState.status === VALID ? fieldState.latestValidValue : undefined,
                 ...pick(fieldState, 'latestValidValue', 'status', 'message', 'hasFocus'),
+
+                props: {
+                    value: fieldState.propsValue,
+                    ...get(this.fields, path).eventHandlers
+                },
 
                 valid: 'DO_NOT_USE',
             }
