@@ -415,7 +415,7 @@ export class FormBiz {
         }
 
         let state = immuSet(this.state, ['fields', ...path], fieldState => ({...fieldState, ...updates}))
-        state = this.fieldStatusChanged(state, prevStatus, fieldState.status)
+        state = this.fieldStatusChanged(state, prevStatus, TO_BE_VALID)
         this.setState('toBeValidated', state)
 
         // 更新依赖字段的状态
