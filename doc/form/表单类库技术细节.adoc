@@ -42,7 +42,7 @@ Message::
 
 
 === 表单类库的运行模式
-表单类库会根据使用者传进来的表单定位，为 form 和每个 field 生成事件回调，并记录下 form 和各 field 的 state。 +
+表单类库会根据使用者传进来的表单定义，为 form 和每个 field 生成事件回调，并记录下 form 和各 field 的 state。 +
 使用者把类库提供的事件回调和当前的 state 信息传递给各个 widget。 +
 这样表单类库就能对用户与 widget 的交互行为进行响应、以及更新 state。 +
 widget 则根据当前的 state，决定自身的行为和样式。
