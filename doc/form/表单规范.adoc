@@ -68,7 +68,7 @@
 https://material.google.com/patterns/errors.html[Android Material Design - Errors] +
 除了给出表单设计的准则，还提供了非常详尽的实际案例和实现细节（例如在哪显示错误信息、甚至包括字体大小有多大...）。非常有用
 
-关于如果显示表单错误信息的一些讨论：
+关于如何显示表单错误信息的一些讨论：
 
 * http://www.uxmatters.com/mt/archives/2015/11/error-messages-are-an-anti-pattern.php
 * http://designmodo.com/ux-form-validation/
