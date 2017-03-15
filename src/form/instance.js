@@ -70,6 +70,12 @@ export class FormBiz {
         reducerNode.setState(describe, { [this.name]: this.state })
     }
 
+    clearState() {
+        const fullState = {...reducerNode.getState()}
+        delete fullState[this.name]
+        reducerNode.replaceState('clear', fullState)
+    }
+
     // form data
     form = null
 
@@ -143,7 +149,7 @@ export class FormBiz {
             }
         }
 
-        this.setState('destory', null)
+        this.clearState()
 
         FormBiz.removeInstance(this.name)
     }
