@@ -23,22 +23,27 @@
 registerSimpleReducer(host, path, initialState):  simpleReducerNode
 
 simpleReducerNode:
-    setState()
+    setState(describe, updates)
+    replaceState(describe, state)
     getState()
     getStore()      // 用来执行通过 store 对象执行的功能
 */
 import { isPlainObject } from 'lodash'
 
 
-// { updates }
+// { updates, replace=false }
 const SET_STATE_ACTION = 'SET_STATE'
 
 export function registerSimpleReducer(host, path, initialState) {
     function simpleReducer(state=initialState, action) {
-        // 发起 action 时，允许在 UPDATE_STATE_ACTION 后附加任意内容，以对此次更新进行说明
+        // 发起 action 时，允许在 SET_STATE_ACTION 后附加任意内容，以对此次更新进行说明
         if(action.type.startsWith(SET_STATE_ACTION)) {
-            // updates 有可能不是 object，而是 number、bool 等纯类型，此时应直接赋值
-            state = isPlainObject(action.updates) ? {...state, ...action.updates} : action.updates
+            if(action.replace) {
+                state = action.updates
+            } else {
+                // updates 有可能不是 object，而是 number、bool 等纯类型，此时应直接赋值
+                state = isPlainObject(action.updates) ? {...state, ...action.updates} : action.updates
+            }
         }
         return state
     }
@@ -56,8 +61,20 @@ export function registerSimpleReducer(host, path, initialState) {
         dispatch({ type: actionType, updates })
     }
 
+    // 类似 setState()，但会用 newState 完全取代原 state，而不是进行合并。
+    // 这在需要剔除 state 中的某些 key 时很有用。因为 setState() 的 merge 机制无法真正剔除一个 key，最多只能将其设置成 null 或 undefined。
+    function replaceState(describe, newState) {
+        if(!newState) {
+            newState = describe
+            describe = null
+        }
+        const actionType = describe ? SET_STATE_ACTION + '/' + describe : SET_STATE_ACTION
+        dispatch({ type: actionType, updates: newState, replace: true })
+    }
+
     return {
         setState,
+        replaceState,
         getState,
         getStore,
     }
