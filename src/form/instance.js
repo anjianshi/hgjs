@@ -269,6 +269,19 @@ export class FormBiz {
             const result = latestValidValues === undefined ? this.config.onSubmit(values) : this.config.onSubmit(values, latestValidValues)
             if(!result || Array.isArray(result)) {
                 this.submitted(result)
+            } else if(result.isFulfilled()) {
+                /*
+                若 promise 已经 fulfilled，一定要直接将其结果提取并传给 this.submitted()，而不能再走 promise.then() 的流程，不然在特殊情况下会出现错乱。
+
+                bluebird Promise 的 cancel 机制有这样一条规则：
+                对已经 fulfilled 的 promise 执行 cancel() 不会有任何效果，在 cancel 前和 cancel 后注册的 then() 回调都会被正常调用。
+                且因为 then() 回调里的内容会在下一个 stack 里执行，所以：“在 cancel() 之前注册的 then() 回调不会被取消，且会在 cancel() 后开始运行”
+
+                这在 Form 上下文里就会导致问题：
+                如果 Form component 在 submit 完成前被 unmount，那么 submit promise 的 then() 回调会等到 form destory（cancelSubmit）执行完之后才被调用，
+                原本 form state 在 destory 时应该已经被清空了的，但是 destory 后才运行的 then() 回调会因触发 submitted() 操作而把 state 又原样还原回去。
+                */
+                this.submitted(result.value())
             } else {
                 this.form.submitPromise = result
                 this.form.submitPromise.then(result => {
