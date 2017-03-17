@@ -28,6 +28,7 @@ export function fieldState(config, initValue) {
 
         status: (hasInit || hasDefault) ? VALID : TO_BE_VALID,
         message: null,
+        everHadValue: value !== undefined,
         hasFocus: false,
     }
 }

@@ -427,10 +427,11 @@ export class FormBiz {
 
         const updates = {
             status: TO_BE_VALID,
-            message: null
+            message: null,
         }
         if(value !== undefined) {
             updates.propsValue = value === null ? '' : value
+            updates.everHadValue = true
         }
 
         let state = immuSet(this.state, ['fields', ...path], fieldState => ({...fieldState, ...updates}))
@@ -725,8 +726,20 @@ export class FormBiz {
         batchedUpdates(() => {
             this.blurred(path)
 
+            /*
+            在字段失去焦点时触发验证。
+            但有一个例外：若此字段从未有过值，那么 blur 时不会触发验证。以减少不必要的验证行为对用户的打扰。
+            例如经常有这样的情况：
+            - 一个包含表单的弹出对话框，第一个字段设置了 autoFocus，所以对话框一打开它就拥有焦点了。
+            - 此时用户看了看，觉得不需要或还没准备好填写这个对话框，他就想点“取消”按钮关闭它。
+            - 但在“取消”按钮被点击到之前，那个获得了 focus 的字段的 blue 事件会先被触发，
+              因为它没有值，属于不合法，于是使得页面重新渲染，以显示它的错误信息。
+            - 这样一来，我们对“取消”按钮的点击行为就会无效化（可能是因为页面重新渲染使得我们并没能真的按到它），必须得再点一下才能真正关闭对话框。
+            */
             const fieldState = get(this.state.fields, path)
-            if(fieldState.status === TO_BE_VALID) this.validate(path)
+            if(fieldState.status === TO_BE_VALID && fieldState.everHadValue) {
+                this.validate(path)
+            }
         })
     }
 

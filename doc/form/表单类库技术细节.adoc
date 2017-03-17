@@ -111,6 +111,7 @@ FieldState
     propsValue: string      字段当前的“控件值”，也就是 widget 里当前实际呈现的内容。
                             可以是字符串，也可以是其他值。不过为了适应 react 的 input widget 的 value 不能为 null 的要求，当值为 null 时，会强制转换为字符串。
                             这个值无所谓合法不合法，它就相当于是一个 buffer。
+    everHadValue: bool      此字段从生成到现在，是否曾有过值。这会影响在哪些情况下会触发对其的验证。
     hasFocus: bool          字段当前是否拥有焦点
     status: valid | invalid | validating | toBeValid
     message: string         字段的错误信息，只在 status=invalid 时有值
@@ -256,12 +257,14 @@ valiateDelay 从字面意思理解，是“字段内容更新后，等待多长�
 * validateDelay=n，是等待 n 毫秒
 * validateDelay=-1，则是无限长的等待时间
 
-无论将 valiateDelay 设成什么值，只要字段在 onBlur 时处于待验证状态，就会立刻触发一次验证。 +
-因此上面无限长的等待时间，实际的效果就是在 onBlur 或触发表单提交时进行验证。
+无论将 validateDelay 设成什么值，只要字段在 onBlur 时处于待验证状态，就会立刻触发一次验证。 +
+因此上面无限长的等待时间，实际的效果就是在 onBlur 或触发表单提交时进行验证。 +
+（这里有一个特殊情况：如果一个字段从来没有过值（everHadValue = false，即没有 initValue / defaultValue、用户也从来没有往里面输入过内容），则在 onBlur 时不会触发验证，就当用户从来没有碰过它。 +
+这样可以减少对用户的不必要的打扰。尤其是当一个 input 被设置成 auto focus 的时候，用户可能都没有想要碰过它，它就获得了焦点，此时用户使其失去焦点，就没必要让其显示错误信息。）
 
 此外，用户在文本框内按回车，也视为发生了 onBlur 事件（虽然并没有真的 blur），立刻触发一次验证。
 
-例如对于 <select>、单选框、多选框等不是输入内容而是通过点击直接修改内容的 widget，以及那些每次调用 onChange，提供的都是经过验证 / 格式化后的值的自定义 widget，应将 validateDelay 设为 0； +
+对于 <select>、单选框、多选框等不是输入内容而是通过点击直接修改内容的 widget，以及那些每次调用 onChange，提供的都是经过验证 / 格式化后的值的自定义 widget，应将 validateDelay 设为 0； +
 对于一般的文本框类字段，根据需要设置合适的延迟； +
 除少数有特殊需求（例如为了配合交互模式）的字段外，大多数字段不应该将 validateDelay 设为 -1。
 
