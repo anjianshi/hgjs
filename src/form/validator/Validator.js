@@ -65,6 +65,9 @@ import { isPlainObject } from 'lodash'
 - valid(formattedValue)     若字段值通过了验证，应调用此函数，并返回它的返回值。如果要对字段值进行格式化，在调用时，应把格式化后的值传给它。
 - invalid(messge)           若字段值未通过验证，应调用此函数，把错误信息传给它，然后返回它的返回值
 
+Validator 不提供内建的 custom message 机制，各 rule 根据需要自行处理。
+例如可以要求使用者指定 spec 时带上 custom message 信息，甚至单独使用一个 spec 来提供 message 信息。例如： specs: { min_len: 1, min_len_msg: 'xxx' }
+
 */
 export class Validator {
     constructor(specs) {
