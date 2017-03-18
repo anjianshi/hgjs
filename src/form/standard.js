@@ -83,7 +83,7 @@ export function fieldConfig(raw) {
         default: undefined,                 // undefined 代表没有默认值
         validator: new TextValidator(),
         bizRule: null,
-        validateDelay: 200,
+        validateDelay: 'intime',
         restoreValid: false,
         depends: [],
     }
@@ -96,7 +96,19 @@ export function fieldConfig(raw) {
             if(unexpectedKeys.length) throw new Error('form field config 中出现了不应出现的 key: ' + unexpectedKeys.join(', '))
         }
         Object.assign(config, raw)
+
+        if(typeof config.validateDelay === 'string') {
+            if(!(config.validateDelay in validateDelayKeywords)) throw new Error(`form validateDelay keyword ${config.validateDelay} 不存在`)
+            config.validateDelay = validateDelayKeywords[config.validateDelay]
+        }
     }
 
     return config
+}
+
+const validateDelayKeywords = {
+    'lazy': -1,
+    'realtime': 0,      // 实时
+    'intime': 200,      // 及时
+    'peace': 700,      // 平静的，不会过度频繁的
 }
