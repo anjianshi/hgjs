@@ -258,7 +258,7 @@ export class FormBiz {
                     if(field.bizRulePromise) {
                         const formattedValue = field.validatingValue
                         this.cancelBizRule(path)
-                        this.fieldValidated(path, { valid: true, value: formattedValue })
+                        this.validated(path, { valid: true, value: formattedValue })
                     }
                 }
             }
