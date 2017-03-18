@@ -68,7 +68,7 @@ import { isPlainObject } from 'lodash'
 */
 export class Validator {
     constructor(specs) {
-        this.specs = Object.assign({}, this.specDefaults, specs)
+        this.specs = { ...this.specDefaults, ...specs }
         this.systemRules = this.systemRuleOrder.map(name => 'system_' + name)
         this.normalRules = this._sortedNormalRules().map(name => 'rule_' + name)
     }
@@ -81,9 +81,9 @@ export class Validator {
         const notSortedRules =
             getAllMethodNames(this, name => /^rule_/.test(name))
                 .map(name => name.substr(5))
-                .filter(name => this.ruleOrder.indexOf(name) === -1);
+                .filter(name => this.ruleOrder.indexOf(name) === -1)
 
-        return [...this.ruleOrder, ...notSortedRules];
+        return [...this.ruleOrder, ...notSortedRules]
     }
 
     /**
@@ -91,11 +91,11 @@ export class Validator {
      * removeSpecs: [key1, key2, ...]
      */
     copy(inplaceSpecs=null, removeSpecs=null) {
-        const specs = Object.assign({}, this.specs, inplaceSpecs)
+        const specs = {...this.specs, ...inplaceSpecs}
         if(removeSpecs) {
-            removeSpecs.forEach(key => { delete specs[key] })
+            for(const key of removeSpecs) delete specs[key]
         }
-        return new this.constructor(specs);
+        return new this.constructor(specs)
     }
 
     /*
@@ -109,12 +109,12 @@ export class Validator {
     validate(value): result
     */
     validate(value) {
-        let result = {valid: true, value: value};
+        let result = {valid: true, value: value}
 
         const iterRules = (rules) => {
             for(const rule of rules) {
                 result = this.callRule(rule, result.value)
-                if(!result.valid) { break }
+                if(!result.valid) break
             }
         }
 
@@ -139,11 +139,11 @@ export class Validator {
                 value: (arguments.length === 0 ? value : formattedValue),
             }
         }
-        const invalid = (message) => ({valid: false, message});
+        const invalid = (message) => ({valid: false, message})
 
-        const result = this[ruleName](value, valid, invalid);
+        const result = this[ruleName](value, valid, invalid)
         if(!isPlainObject(result)) throw new Error('field rule 返回值格式错误')
-        return result;
+        return result
     }
 
     // ===== rules =====
@@ -151,12 +151,12 @@ export class Validator {
     // 各 system rule 的执行顺序，不出现在这里的 system rule 不会被执行。
     // 若要修改，请确保自己了解各 system rule 的行为及其意义。
     get systemRuleOrder() {
-        return ['default', 'trim', 'emptyable'];
+        return ['default', 'trim', 'emptyable']
     }
 
     // 各普通 rule 的执行顺序，未出现在这里的 rule 会在这些 rule 之后以随机顺序被执行。
     get ruleOrder() {
-        return [];
+        return []
     }
 
     // 返回各 spec 的默认值。
@@ -190,10 +190,10 @@ export class Validator {
     system_emptyable(value, valid, invalid) {
         if(value === null || value === '') {
             if(!this.specs.emptyable) {
-                return invalid('不能为空');
+                return invalid('不能为空')
             }
-            return valid(null);
+            return valid(null)
         }
-        return valid();
+        return valid()
     }
 }

@@ -2,13 +2,13 @@ import { Validator } from './Validator'
 
 export class TextValidator extends Validator {
     get ruleOrder() {
-        return ['type', 'regex'];
+        return ['type', 'regex']
     }
 
     rule_type(value, valid, invalid) {
         return typeof value !== 'string'
             ? invalid('应该是文本值')
-            : valid();
+            : valid()
     }
 
     rule_choices(value, valid, invalid) {
@@ -48,22 +48,22 @@ export class TextValidator extends Validator {
         if((min !== null && len < min) || (max !== null && len > max)) {
             let msg;
             if(min !== null && max !== null) {
-                msg = min !== max ? `应在${min} ~ ${max}个字之间` : `长度应为${min}个字`;
+                msg = min !== max ? `应在${min} ~ ${max}个字之间` : `长度应为${min}个字`
             } else if(min !== null) {
-                msg = `不能少于${min}个字`;
+                msg = `不能少于${min}个字`
             } else {
-                msg = `不能超过${max}个字`;
+                msg = `不能超过${max}个字`
             }
-            return invalid(msg);
+            return invalid(msg)
         }
-        return valid();
+        return valid()
     }
 }
 
 /* NumberValidator 和 MoneyValidator 的基类 */
 class _NumberValidator extends Validator {
     get ruleOrder() {
-        return ['type'];
+        return ['type']
     }
 
     get specDefaults() {
@@ -88,15 +88,15 @@ class _NumberValidator extends Validator {
             } else {
                 msg = this.messageTmpl(min, max).max
             }
-            return invalid(msg);
+            return invalid(msg)
         }
-        return valid();
+        return valid()
     }
 
     rule_nozero(value, valid, invalid) {
         return this.specs.nozero && this.iszero(value)
             ? invalid('不能为 0')
-            : valid();
+            : valid()
     }
 
     messageTmpl(min, max) {
@@ -115,12 +115,12 @@ class _NumberValidator extends Validator {
 
 export class NumberValidator extends _NumberValidator {
     rule_type(value, valid, invalid) {
-        value = parseInt(value);
-        return isFinite(value) ? valid(value) : invalid('必须是合法的整数');
+        value = parseInt(value)
+        return isFinite(value) ? valid(value) : invalid('必须是合法的整数')
     }
 
-    lt(a, b) { return a < b; }
-    iszero(n) { return n === 0; }
+    lt(a, b) { return a < b }
+    iszero(n) { return n === 0 }
 }
 
 /*
