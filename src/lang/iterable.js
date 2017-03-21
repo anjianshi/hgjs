@@ -11,6 +11,60 @@
 import { findIndex, flatMap } from 'lodash'
 
 
+// ========== 集合遍历类函数 ==========
+
+// 返回 iterable 里指定 index 的内容
+// 默认返回地一个元素；若 index 小于 0 或超出 iterable 长度，返回 undefined
+export function iterGet(iter, index=0) {
+    if(index < 0) return undefined
+
+    let i = 0
+    for(const value of iter) {
+        if(i === index) {
+            return value
+        } else {
+            i += 1
+        }
+    }
+    return undefined
+}
+
+/*
+返回 iterable 最前面的几个元素
+
+若 num 小于等于 0，返回空数组
+若 num 大于 iterable 的长度，仅返回 iterable 的所有内容
+*/
+export function iterTake(iter, num=0) {
+    if(num <= 0) return []
+
+    const taked = []
+    for(const value of iter) {
+        taked.push(value)
+        if(taked.length === num) break
+    }
+    return taked
+}
+
+/*
+返回 iterable 跳过开头几个内容后的结果
+若 num 小于等于 0，返回整个 iterable 的内容；若 num 大于 iterable 长度，返回空数组
+*/
+export function iterSkip(iter, num=0) {
+    let skippedNum = 0
+
+    const taked = []
+    for(const value of iter) {
+        if(skippedNum < num) {
+            skippedNum++
+        } else {
+            taked.push(value)
+        }
+    }
+    return taked
+}
+
+
 // ========== 集合处理类函数 ==========
 // 注意不要把以下函数 lodash 里名称类似的函数混淆
 
