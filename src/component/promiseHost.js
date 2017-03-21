@@ -23,8 +23,8 @@ class Com extends React.Component {
         // 没有传给 host 的 promise 不会被清理
         host(promise)
 
-        // 也可以通过 this.host() 来调用
-        this.host(promise)
+        // 也可以通过 this.hostPromise() 来调用
+        this.hostPromise(promise)
     }
     ...
 }
