@@ -2,7 +2,7 @@ import { registerSimpleReducer } from 'store'
 import { libReducerHost } from 'init'
 import { shallowEqual, immuSet, immuDel, setWithObj } from 'lang'
 import { has, get, isPlainObject, isEqual, flatMap, pick } from 'lodash'
-import { makeTimerHost } from 'component'
+import { makeTimerHost } from 'hosts'
 import {
     VALID, INVALID, TO_BE_CONFIRM, VALIDATING, TO_BE_VALID,
     formState as makeFormState, fieldState as makeFieldState,
