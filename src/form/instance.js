@@ -580,7 +580,7 @@ export class FormBiz {
 
         let state = immuSet(this.state, ['fields', ...path], fieldState)
         state = this.fieldStatusChanged(state, prevStatus, fieldState.status)
-        this.setState('validated', state)
+        this.setState('validated ' + path.join('.'), state)
     }
 
     blurred(path) {
@@ -671,19 +671,23 @@ export class FormBiz {
             }
             this.setValue(path, value)
 
-            const field = get(this.fields, path)
-            if(field.config.validateDelay === 0) {
-                this.validate(path)
-            } else if(field.config.validateDelay > 0) {
-                this.clearValidateTimeout(path)
+            // 若 value 是经由浏览器的自动填充功能填充进来的，则会在 hasFocus = false 的情况下触发此回调，
+            // 此时，上面的 setValue() 调用已经会触发 validate，无需再 validate 一次了。
+            if(get(this.state.fields, path).hasFocus) {
+                const field = get(this.fields, path)
+                if(field.config.validateDelay === 0) {
+                    this.validate(path)
+                } else if(field.config.validateDelay > 0) {
+                    this.clearValidateTimeout(path)
 
-                field.validateTimeoutId = this.timerHost.setTimeout(() => {
-                    // 在 setTimeout 中执行的方法已经跳出了上面的 batchedUpdates 的 context，因此要重新开启
-                    batchedUpdates(() => {
-                        field.validateTimeoutId = null
-                        this.validate(path)
-                    })
-                }, field.config.validateDelay)
+                    field.validateTimeoutId = this.timerHost.setTimeout(() => {
+                        // 在 setTimeout 中执行的方法已经跳出了上面的 batchedUpdates 的 context，因此要重新开启
+                        batchedUpdates(() => {
+                            field.validateTimeoutId = null
+                            this.validate(path)
+                        })
+                    }, field.config.validateDelay)
+                }
             }
 
             if(this.config.onChange) {
