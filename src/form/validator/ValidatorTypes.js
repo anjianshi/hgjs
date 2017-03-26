@@ -39,6 +39,12 @@ export class TextValidator extends Validator {
         return valid()
     }
 
+    /*
+    使用提示：没有必要把 min_len 设为 1，它不会起任何作用。
+    如果一个字段不允许为空字符串，把 emptyable 设为 false 即可。
+    因为空字符串总是会被 emptyable 拦截住，在经它检查过后，无论是否通过，都不会再调用后续的 rule，
+    也就是说压根不会有 min_len 小于 1 的字段值被传给这个 rule。
+    */
     rule_len(value, valid, invalid) {
         const len = value.length;
         const [min, max] = [
