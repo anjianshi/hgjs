@@ -83,7 +83,7 @@ export function fieldConfig(raw) {
         default: undefined,                 // undefined 代表没有默认值
         validator: new TextValidator(),
         bizRule: null,
-        validateDelay: 'intime',
+        validateDelay: 'peace',
         restoreValid: false,
         depends: [],
     }
@@ -109,6 +109,6 @@ export function fieldConfig(raw) {
 const validateDelayKeywords = {
     'lazy': -1,
     'realtime': 0,      // 实时
-    'intime': 200,      // 及时
-    'peace': 700,      // 平静的，不会过度频繁的
+    'intime': 200,      // 及时（通常可用于搜索类文本框）
+    'peace': 700,       // 平静的，比较不频繁的
 }
