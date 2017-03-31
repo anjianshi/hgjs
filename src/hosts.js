@@ -64,7 +64,15 @@ export function makePromiseHost() {
 和 makePromiseHost 类似，不过是对 setTimeout 和 setInterval 进行托管，
 当使用者决定停止运行时，可一次性将尚未触发 / 终止的 timeout 和 interval 全部取消。
 
-使用范例：
+此工具还额外提供了一个 setDelayInterval() 函数，可以用来控制 setInterval(fn) 里的 fn 第一次被执行的时间。
+在完成第一次执行后，才开始根据 interval 安排下次运行。
+它可以用来延迟第一次执行的时间（相当于 setTimeout + setInterval）；也可以用于提早第一次运行的时间。
+例如将 delay 设置为 0 即可实现立即执行一次，然后再安排 interval
+
+格式： setDelayInterval(fn, interval, delay)
+
+
+makeTimerHost() 使用范例：
 const host = makeTimerHost()
 
 host.setTimeout(...)
@@ -90,6 +98,14 @@ export function makeTimerHost() {
         return id
     }
 
+    function hostedSetDelayInterval(fn, interval, delay, ...args) {
+        // 注意：这里返回的是 timeout 的 id，当第一次执行完成后，后面的 interval 没法通过这个 id 来取消
+        return hostedSetTimeout(() => {
+            fn()
+            hostedSetInterval(fn, interval, ...args)
+        }, delay, ...args)
+    }
+
     function clear() {
         for(const id of timeouts) clearTimeout(id)
         timeouts = []
@@ -101,6 +117,7 @@ export function makeTimerHost() {
     return {
         setTimeout: hostedSetTimeout,
         setInterval: hostedSetInterval,
+        setDelayInterval: hostedSetDelayInterval,
         clear
     }
 }

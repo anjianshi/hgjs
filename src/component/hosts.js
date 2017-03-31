@@ -101,6 +101,10 @@ export function withTimer(getKey=null) {
             setInterval(...args) {
                 return this._timerHost.setInterval(...args)
             }
+
+            setDelayInterval(...args) {
+                return this._timerHost.setDelayInterval(...args)
+            }
         }
         return WithTimer
     }
