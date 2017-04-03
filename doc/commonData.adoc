@@ -1,0 +1,101 @@
+= 维护公共数据
+
+在应用中，经常会有多个 component / 页面需要用到同一份数据的情况， +
+如果每个 component / 页面都各自进行载入，会造成很多不必要的重复载入。
+
+通过此工具，可以实现对这些数据的“一次加载、多处使用”： +
+数据只要被载入过一次，就会存入 store，后面其他 component 或页面再使用它，就无需再次加载了。 +
+既提升了访问速度，又减少了多余的请求、减轻了服务器的压力。
+
+这些存放在公共空间里的数据，就称之为“公共数据”。
+
+
+== 使用方式
+
+=== 初始化，并定义好所有支持载入的数据类型
+```
+import * as commonData from 'commonData'
+commonData.init(...)
+```
+
+
+=== 将公共数据引入到 Component 中
+
+方式1：使用 withData 函数包裹 component（推荐）
+
+```
+@commonData.withData('dataName', 'dataName2', ...)
+class Com extends React.Component {
+    render() {
+        console.log(this.props.dataName, this.props.dataName2)
+        return <div></div>
+    }
+}
+```
+
+大部分情况下应该使用这种方式。 +
+注意， withData 是一个 HoC，不是 decorator。若要搭配其他 decorator 一起使用，必须像 connect() 一样，把它放到其他 decorator 之上。
+
+
+方式2：通过 commonData.need() 或 commonData.load() 函数触发数据的载入，再通过 react-redux 的 connect 函数引入数据
+（实际上就是把 withData 自动完成了的工作改为手动进行了）
+这种方式更灵活，例如可以控制数据加载的时机（例如可以根据当前环境决定是否要载入）
+
+```
+@connect(state => ({
+    dataName: state.commonData.dataName                    // 假设把 commonData 工具挂载到了 state.commonData
+    dataNameLoading: state.commonData.loading.dataName     // 通过 loading 子项可以获取到此数据是否正在载入中的信息
+}))
+class Com extends React.Component {
+    componentWillMount() {
+        // commonData.need() 函数会对尚未载入的数据进行载入
+        commonData.need("dataName")
+    },
+
+    render() {
+        // 如果目标数据尚未完成载入，那么数据值为 null，loading 值为 true
+        console.log(this.props.dataName, this.props.dataNameLoading)
+        return <div></div>
+    }
+}))
+```
+
+通过 commonData.need() / load() 以及 withData 提供的 props.onDataLoaded() 都可以实现在数据载入完成时得到通知（触发指定回调），
+以完成后续操作（例如用得到的数据初始化 form）
+免去了分别在 mount 和每次 receiveProps 时检查数据是否已经载入的麻烦
+（因为数据既有可能在 component mount 时已经载入，也有可能在 mount 后的某个时间点才载入）
+
+
+=== 在 component 里手动更新公共数据
+有些 component / 页面可能会修改从公共空间中取出来的数据。
+这时就需要将修改过的数据写回到公共空间里，或者要求公共空间重新载入此项数据。
+
+如果希望公共空间重新进行载入，可以手动调用 load() 函数。
+```
+commonData.load(name)
+```
+
+如果希望由 component / 页面自己完成载入行为，而不再通过 commonData 里的 loader，可以使用 commonData.loading()
+```
+commonData.loading(name, promise)
+```
+promise 最终应返回新的公共数据
+
+如果 component / 页面不需要进行异步载入，现在就已经有准备好了的新数据，可以调用 commonData.loaded() 来写入数据。
+```
+commonData.loaded(name, data)
+```
+
+更多技术细节，见具体代码中的注释
+
+
+== 公共数据使用建议
+
+对于专门用来编辑某种数据的 component / 页面，应强制重新载入此种数据(withData 中设置 forceReload 为 true；或者使用 load() 而不是 need())，以保证获取最新的数据。
+
+这是为了避免类似这样的情况： +
+    员工A和员工B分别在两台电脑上访问。员工A更新了某样数据（例如商品名称），而员工B因为没有刷新页面，他看到的还是原来的值。 +
+    如果这时员工B打开了修改商品名称的页面，想要进行修改，那么他将会基于原来的值进行修改，而员工A所做的修改将会丢失。 +
+    如果客户等级页面每次被打开，都要求刷新目标数据，则可以避免这个问题。
+
+在只需要使用、不需要编辑目标类型的数据地方，则无需这样设置。
