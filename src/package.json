@@ -1,6 +1,6 @@
 {
     "name": "hgjs",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "homepage": "https://github.com/anjianshi/hgjs",
     "license": "MIT",
     "author": "anjianshi <anjianshi@gmail.com>",
@@ -10,8 +10,9 @@
         "bluebird": "^3.4.7",
         "query-string": "^4.3.2",
         "lodash": "^4.17.4",
-        "react-redux": "^5.0.2",
-        "react": "^15.4.2",
+        "prop-types": "^15.5.4",
+        "react-redux": "^5.0.3",
+        "react": "^15.5.3",
         "redux": "^3.6.0"
     }
 }

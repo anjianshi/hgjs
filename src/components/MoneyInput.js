@@ -1,4 +1,5 @@
-import React, { PropTypes } from 'react'
+import React from 'react'
+import PropTypes from 'prop-types'
 import { extraProps } from 'component'
 
 // 用来输入金额数据的文本框。会把原始的以“厘”为单位的数值转换为以“元”为单位再显示在文本框内部
