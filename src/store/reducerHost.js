@@ -239,20 +239,26 @@ export function makeReducerHost() {
             return get(getStore().getState(), [...getMountPoint(), ...path.split('.')])
         }
 
-        function dispatch(rawAction) {
-            const action = {
-                ...rawAction,
-                type: PRIVATE_ACTION_PREFIX + path + '/' + rawAction.type,
-                _rh_hostId: id,
-                _rh_path: path,
-                _rh_type: rawAction.type
-            }
-            return getStore().dispatch(action)
+        function reducerDispatch(rawAction) {
+            return dispatch(path, rawAction)
         }
 
         return {
-            path, getStore, getState, dispatch
+            path, getStore, getState, dispatch: reducerDispatch
         }
+    }
+
+    function dispatch(reducerPath, rawAction) {
+        if(belongsHost) return belongsHost._dispatch(reducerPath, rawAction)
+
+        const action = {
+            ...rawAction,
+            type: PRIVATE_ACTION_PREFIX + reducerPath + '/' + rawAction.type,
+            _rh_hostId: id,
+            _rh_path: reducerPath,
+            _rh_type: rawAction.type
+        }
+        return getStore().dispatch(action)
     }
 
     self = {
@@ -261,6 +267,7 @@ export function makeReducerHost() {
         bindStore,
         _getStore: getStore,
         _getMountPoint: getMountPoint,
+        _dispatch: dispatch,
 
         link,
         _linkTo: linkTo,
