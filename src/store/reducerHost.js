@@ -212,8 +212,9 @@ export function makeReducerHost() {
     }
 
     function getMountPoint() {
-        const mountPointStr = belongsHost ? belongsHost._getMountPoint() : mountPoint
-        return mountPointStr ? mountPointStr.split('.') : []
+        return belongsHost
+            ? belongsHost._getMountPoint()
+            : (mountPoint ? mountPoint.split('.') : [])
     }
 
     function registerReducer(path, reducer) {
