@@ -31,6 +31,8 @@ let options
 
 // ========== reducer ==========
 
+const INIT = 'INIT'
+
 // { to: path, data }
 const GO = 'GO'
 
@@ -42,18 +44,19 @@ const BACK = 'BACK'
 // { to: path, data }
 const REPLACE = 'REPLACE'
 
-function navigatorReducer(state=null, action) {
-    if(!state) {
-        state = {
-            // 导航历史记录。最后一条就是当前导航到的项目。
-            history: [
-                { path: options.defaultPath, data: undefined }
-                // ...
-            ]
-        }
-    }
-
+function navigatorReducer(state={ inited: false }, action) {
     switch(action.type) {
+        case INIT:
+            return {
+                inited: true,
+
+                // 导航历史记录。最后一条就是当前导航到的项目。
+                history: [
+                    { path: options.defaultPath, data: undefined }
+                    // ...
+                ]
+            }
+
         case GO: {
             const path = action.path === 'default' ? options.defaultPath : action.path
             const history = [...state.history]
@@ -124,7 +127,7 @@ export class Navigator extends React.Component {
         // path 不能为 'default'，这是一个保留字，用来指定导航到默认路由
         routes: PropTypes.object.isRequired,
 
-        // 默认导航到那个 route。
+        // 默认导航到哪个 route。
         // navigator 初始化时会导航到此 path；执行导航跳转操作时，也可以通过将 path 指定为 'default' 来跳转到此 path
         defaultPath: PropTypes.string.isRequired,
 
@@ -138,6 +141,8 @@ export class Navigator extends React.Component {
 
     componentWillMount() {
         this.prepare(this.props)
+
+        dispatch({ type: INIT })
     }
 
     componentWillReceiveProps(nextProps) {
@@ -149,7 +154,13 @@ export class Navigator extends React.Component {
     }
 
     render() {
-       return <NavigatorRender>{this.props.children}</NavigatorRender>
+        /*
+        把 options 传给 NavigatorRender，以便 options 发生变化时能触发重现渲染。
+        例如在 HMR 环境下，某个 view component 的代码更新后，options.routes 会发生变化，
+        如果不把 options 传给 NavigatorRender，那么它就不会感知到这一变化，也不会重新渲染新的 component 内容，
+        那么 HMR 实际也就失效了。
+        */
+        return <NavigatorRender options={options}>{this.props.children}</NavigatorRender>
     }
 }
 
@@ -161,6 +172,8 @@ class NavigatorRender extends React.Component {
     }
 
     render() {
+        if(!this.props.inited) return null
+
         const { history } = this.props
         const { routes } = options
 
