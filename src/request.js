@@ -52,8 +52,8 @@ export function makeRequest(url, options=null) {
             // HTTP 请求完成，status 有可能是 200，也有可能是 404、500 等
             .then(response => {
                 const contentType = response.headers.get('Content-Type') || ''
-                const getBody = contentType.startsWith('application/json') ? response.json : response.text
-                return getBody.call(response).then(body => {
+                const bodyPromise = contentType.startsWith('application/json') ? response.json() : response.text()
+                bodyPromise.then(body => {
                     response.parsedBody = body
                     resolve(response)
                 })
