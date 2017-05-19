@@ -1,12 +1,10 @@
 /*
-ReactNative only
-
 进行响应式设计的相关工具
 */
 
 import React from 'react'
 import { Platform, Dimensions } from 'react-native'
-import { emulateNative } from 'component/emulateNative'
+import { emulateNative } from 'native/component/emulateNative'
 
 
 // 返回经过计算的当前窗口尺寸信息
