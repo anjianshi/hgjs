@@ -6,6 +6,7 @@ ReactNative only
 
 import React from 'react'
 import { Platform, Dimensions } from 'react-native'
+import { emulateNative } from 'component/emulateNative'
 
 
 // 返回经过计算的当前窗口尺寸信息
@@ -83,8 +84,12 @@ Dimensions.addEventListener('change', () => {
 responsive hoc
 用此 hoc 包裹 component，以使其能在窗口尺寸变化时重新渲染
 */
+@emulateNative
 export function responsive(Component) {
     return class Responsive extends React.Component {
+        // 适配 react-navigation
+        static navigationOptions = Component.navigationOptions
+
         state = { windowData: getWindowData() }
 
         componentWillMount() {
@@ -97,15 +102,8 @@ export function responsive(Component) {
 
         updateData = () => this.setState({ windowData: getWindowData() })
 
-        // https://github.com/facebook/react-native/issues/1040
-        setNativeProps = props => this.child.setNativeProps(props)
-
         render() {
-            return <Component
-                _responsiveWindowData={this.state.windowData}
-                ref={r => {this.child = r}}
-                {...this.props}
-            />
+            return <Component _responsiveWindowData={this.state.windowData} {...this.props} />
         }
     }
 }

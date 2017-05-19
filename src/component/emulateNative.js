@@ -10,7 +10,9 @@ https://facebook.github.io/react-native/docs/direct-manipulation.html
 通过应用此 decorator，可以自动实现此行为。
 
 限制：
-自定义 component 只能返回单个 children；且不能给 children 指定 ref，因为这个 ref 会被 decorator 给覆盖掉。
+- 自定义 component 只能返回单个 children
+- 不能给 children 指定 ref，因为这个 ref 会被 decorator 给覆盖掉
+- 自定义 component 还要保证将 extra props 都传给 children，不然作为 TouchableOpacity 的 children 时不能正常运行
 
 其实还有一种解决办法是在自定义 component 外包裹一层 <View />，不过没有实际试过是否可行，
 见：https://github.com/facebook/react-native/issues/1040#issuecomment-96745870
