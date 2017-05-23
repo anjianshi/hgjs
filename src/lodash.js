@@ -5,7 +5,6 @@ export differenceBy from 'lodash/differenceBy'
 export each from 'lodash/each'
 export every from 'lodash/every'
 export findIndex from 'lodash/findIndex'
-export flatMap from 'lodash/flatMap'
 export flatten from 'lodash/flatten'
 export flowRight from 'lodash/flowRight'
 export fromPairs from 'lodash/fromPairs'
@@ -35,3 +34,7 @@ export sumBy from 'lodash/sumBy'
 export toPairs from 'lodash/toPairs'
 export transform from 'lodash/transform'
 export values from 'lodash/values'
+
+// lodash 的 flatMap 不能正确处理 ES6 Set，使用起来有危险，改用自行实现的 lang/flatMap 代替
+// 这里导出的 _flatMap 是用来让那个代替函数基于它来实现功能
+export _flatMap from 'lodash/flatMap'

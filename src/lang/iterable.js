@@ -8,7 +8,8 @@
   个别函数的具体情况，见函数备注。
 */
 
-import { findIndex, flatMap } from 'lodash'
+import { findIndex } from 'lodash'
+import { flatMap } from 'lang'
 
 
 // ========== 集合遍历类函数 ==========

@@ -1,4 +1,4 @@
-import { has, get, setWith, pickBy, isPlainObject } from 'lodash'
+import { has, get, setWith, pickBy, isPlainObject, _flatMap } from 'lodash'
 
 export * from './objectImmutable'
 export * from './iterable'
@@ -42,6 +42,16 @@ export function getAllMethodNames(obj, filter=null) {
 // 通过此函数，可以强制 lodash 用 {} 来创建节点
 export function setWithObj(obj, path, value) {
     return setWith(obj, path, value, nsValue => nsValue || {})
+}
+
+
+/*
+用来代替 lodash 自带的 flatMap。
+那个 lodash 的 flatMap 无法正确处理 Set，而且在不同环境下行为好像还不一样：在浏览器里测试时会认为 Set 是 length 为 0 的数组；在 ReactNative 里则是会返回 Map( { value: value, value2: value2 } ) 的奇怪结果。
+*/
+export function flatMap(collection, ...args) {
+    if(collection instanceof Set) collection = [...collection]
+    return _flatMap(collection, ...args)
 }
 
 export function wrapArray(value) {
