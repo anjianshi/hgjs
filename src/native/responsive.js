@@ -81,6 +81,7 @@ Dimensions.addEventListener('change', () => {
 /*
 responsive hoc
 用此 hoc 包裹 component，以使其能在窗口尺寸变化时重新渲染
+此 component 会向原 component 传递一个 windowData props，以便那个 component 用它进行计算
 */
 @emulateNative
 export function responsive(Component) {
@@ -101,7 +102,7 @@ export function responsive(Component) {
         updateData = () => this.setState({ windowData: getWindowData() })
 
         render() {
-            return <Component _responsiveWindowData={this.state.windowData} {...this.props} />
+            return <Component windowData={this.state.windowData} {...this.props} />
         }
     }
 }
