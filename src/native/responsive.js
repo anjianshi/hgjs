@@ -7,24 +7,45 @@ import { Platform, Dimensions } from 'react-native'
 import { emulateNative } from 'native/component/emulateNative'
 
 
+// Android 下状态栏的高度。后面计算时会用到
+// 因为大部分 Android 设备等状态栏高度都一样，所以这里直接定义为一个常量
+export const ANDRIOD_STATUS_HEIGHT = 24
+
+// iOS 下顶端状态栏的高度。目前所有设备上均为此值
+export const IOS_STATUS_HEIGHT = 20
+
+
 // 返回经过计算的当前窗口尺寸信息
 export function getWindowData() {
     const rawValues = Dimensions.get('window')
 
-    // Android 下，获取到的高度并没有把状态栏的高度给抛掉，因为大部分 Android 设备等状态栏高度都一样，所以这里就使用这个常数来修正
+    const width = rawValues.width
+
+    // Android 下，获取到的高度并没有把状态栏的高度给抛掉，需要手动减去
     // https://github.com/facebook/react-native/issues/8282
     // 另一篇可能有用的资料：http://stackoverflow.com/questions/35436643/how-to-find-height-of-status-bar-in-android-through-react-native
-    const ANDRIOD_STATUS_HEIGHT = 24
-
-    const width = rawValues.width
     const height = rawValues.height - (Platform.OS === 'android' ? ANDRIOD_STATUS_HEIGHT : 0)
+
+    const max = Math.max(width, height)
+    const min = Math.min(width, height)
+
+    const landscape = width > height
+    const portrait = height > width
+
+    // 当前设备是否是大尺寸设备
+    // 对于 iOS，此值代表了当前设备是 iPhone 还是 iPad，见 http://iosres.com
+    const big = max >= 1024
+
+    const iOSStatusBarSize = Platform.OS === 'ios'
+        ? (!big && landscape ? 0 : IOS_STATUS_HEIGHT)   // iPhone 横向显示时状态栏会隐藏
+        : 0         // Android 下此值设为 0，以方便使用者进行不受平台影响的尺寸计算
+
     return {
-        width,
-        height,
-        max: Math.max(width, height),
-        min: Math.min(width, height),
-        landscape: width >= height,
-        portrait: height >= width,
+        width, height,
+        max, min,
+        landscape, portrait,
+        big,
+        iOSStatusBarSize,
     }
 }
 
