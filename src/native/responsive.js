@@ -104,9 +104,9 @@ responsive hoc
 用此 hoc 包裹 component，以使其能在窗口尺寸变化时重新渲染
 此 component 会向原 component 传递一个 windowData props，以便那个 component 用它进行计算
 */
-@emulateNative
 export function responsive(Component) {
-    return class Responsive extends React.Component {
+    @emulateNative
+    class Responsive extends React.Component {
         // 适配 react-navigation
         static navigationOptions = Component.navigationOptions
 
@@ -126,4 +126,5 @@ export function responsive(Component) {
             return <Component windowData={this.state.windowData} {...this.props} />
         }
     }
+    return Responsive
 }
