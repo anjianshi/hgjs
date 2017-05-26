@@ -5,12 +5,14 @@ import { responsive } from 'native/responsive'
 
 
 /*
-让未指定宽度的 component 能在父元素中横向居中对齐
+让未明确指定宽度的元素能横向居中
 
-在 ReactNative 里，要让一个元素居中，我们一般会在父元素里设置 alignItems: center
-但这一样式用于某些特殊元素（例如 TextInput）时会出现问题，这些元素的宽度会塌缩（因为它们不像 Text 那样内部又内容能将宽度撑起来）
+在 ReactNative 里，要让一个元素居中，我们一般会在父元素里设置 "alignItems: center"。
 
-通过为这些特殊元素明确指定宽度可以解决此问题，但在大部分情况下，我们会希望这些元素自适应宽度，以适配不同尺寸的设备。
+但这种居中方式是有局限的，像 TextInput 这样的元素，在未明确指定宽度的情况下，它自身是没有宽度的，
+一旦设置了 alignItems，它的宽度就会塌陷为 0 或 minWidth，而不会再向外扩展。
+（一般对于 TextInput，我们会给它设置一个 maxWidth，希望它任意向外扩展，除非达到 maxWidth，然后再居中对齐）
+
 此时，就可以使用此元素，它会检测子元素在自然情况下的实际宽度，然后通过设置 padding 来使其居中。
 注意：使用此元素时，父元素不能指定 alignItems: center
 */
