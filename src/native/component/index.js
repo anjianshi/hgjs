@@ -3,4 +3,4 @@
 */
 
 export { emulateNative } from './emulateNative'
-export { confirmBack } from './confirmBack'
+export { confirmGoBack } from './confirmGoBack'
