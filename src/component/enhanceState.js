@@ -101,9 +101,16 @@ function logging(componentName, describe, prevState, updates, currState) {
         const timeStr = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds()
 
         // 注意，因为 React 的 state 并不是实时更新的，所以 prev / current state 未必能反应此时的真实情况
-        console.groupCollapsed(`%c setState @ ${timeStr} ${componentName}::${describe}`, style)
-        console.debug('prev state', prevState)
-        console.debug('updates', updates)
-        console.debug('current state', currState)
-        console.groupEnd()
+        if(!console.groupCollapsed) {   // 像 ReactNative 之类的环境可能没有 console.groupCollapsed() 方法
+            console.log(`setState @ ${timeStr} ${componentName}::${describe}`)
+            console.log('prev state', prevState)
+            console.log('updates', updates)
+            console.log('current state', currState)
+        } else {
+            console.groupCollapsed(`%c setState @ ${timeStr} ${componentName}::${describe}`, style)
+            console.debug('prev state', prevState)
+            console.debug('updates', updates)
+            console.debug('current state', currState)
+            console.groupEnd()
+        }
 }
