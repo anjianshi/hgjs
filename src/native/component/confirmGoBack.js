@@ -8,9 +8,7 @@ App 中有一些页面（主要是编辑类的）在进行离开页面的操作�
 
 此工具还能响应 Android 下的实体返回键，当用户按下返回键时，也会先进行确认，才决定是否要离开页面。
 
-
-通过此 HoC 方便地实现在用户按下 Android 设备的实体返回键时，由 component 决定是否要执行返回操作，且 component 可以异步地作出决定。
-例如 component 如果是一个编辑界面，可以在用户试图返回时，。
+此工具需搭配 react-navigation 使用
 */
 export function confirmGoBack(Component) {
     return class ConfirmGoBack extends Component {
