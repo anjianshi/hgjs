@@ -221,7 +221,18 @@ export function makeReducerHost() {
         if(belongsHost) {
             return belongsHost.registerReducer(path, reducer)
         } else {
+            let skipSetReducer = false
+
             for(const otherPath of reducers.keys()) {
+                // HMR 环境下，更新代码后重新加载代码时，可能因为 reducer 重复注册的问题而打断重新加载的进程
+                // 因此这里设置成在开发环境下自动跳过对重复 reducer 的注册
+                // 但如果 reducer 被更新了，一定不要忘了要完整重新加载页面 / app 才能运行新的 reducer 代码
+                if(otherPath === path && process.env.NODE_ENV === 'development') {
+                    console.log('hgjs/reducerHost: ignore register repeatted reducer')
+                    skipSetReducer = true
+                    break
+                }
+
                 // 不允许出现一个 path 是另一个 path 的上级的情况（path1='a.b', path2='a.b.c'）
                 // 此检查也同时保证了不会有同 path 的 reducer
                 if(otherPath.startsWith(path) || path.startsWith(otherPath)) {
@@ -229,9 +240,11 @@ export function makeReducerHost() {
                 }
             }
 
-            reducers.set(path, reducer)
-            if(store) {
-                store.dispatch({ type: INIT_STATE_ACTION_PREFIX + path, path })
+            if(!skipSetReducer) {
+                reducers.set(path, reducer)
+                if(store) {
+                    store.dispatch({ type: INIT_STATE_ACTION_PREFIX + path, path })
+                }
             }
         }
 
