@@ -16,3 +16,65 @@ A collection of utility libraries used by huoguan.net's products.
 . 根据需要，可以回到根目录执行 `yarn run watch`，持续编译代码
 . 进入依赖 `hgjs` 的项目中，执行 `yarn link hgjs`
 
+
+'''
+
+= decorator 与 HOC 规范
+
+== decorator 与 HOC 的异同
+. decorator 通常是继承式的，生成一个继承自原 component 的新 component，扩展原 component 的一些行为，并完全代替原 component
+. HOC 则是包裹式的，在原 component 外再包裹一层 component，渲染时，两个 component 都会被渲染
+
+基于以上特点，一个 component 如果要同时应用 decorator 和 HOC，那么应该先应用 decorator，再应用 HOC。
+不然 decorator 的扩展对象将会是 HOC component 而不是原 component。
+
+
+== decorator 范例
+
+[source,javascript]
+----
+import hoistNonReactStatic from 'hoist-non-react-statics'
+
+function someDecorator(Component) {
+    class DecoratedClassName extends Component {
+        // 保证 Component 原来的 displayName 不会丢失
+        static displayName = Component.displayName || Component.name
+
+        someMethod() {}
+
+        componentWillReceiveProps(nextProps) {
+            // 在重写 lifecycle 时，不要忘了检查并调用上级 class 里的同名方法
+            if(super.componentWillReceiveProps) super.componentWillReceiveProps(nextProps)
+
+            // do somthing...
+        }
+    }
+
+    // 让 DecoratedClass 显式继承 WrappedComponent 上的 static properties。
+    // 不这样做的话，虽然通过 DecoratedCom.xxx 能读取到 WrappedCom.xxx 的内容，
+    // 但是调用 Object.keys(DecoratedCom) 或 Object.getOwnPropertyNames(DecoratedCom) 时这些 properties 并不会被列出来。
+    // 这会导致在 component 既应用了 decorator 又应用了 HOC 的情况下，HOC 里对 hoistNonReactStatic() 的调用失效。
+    return hoistNonReactStatic(DecoratedClass, WrappedComponent)
+}
+----
+
+
+== HOC 范例
+
+[source,javascript]
+----
+import hoistNonReactStatic from 'hoist-non-react-statics'
+
+function HOC(WrappedComponent) {
+    class HOCComponent extends React.Component {
+        return <WrappedComponent ... />
+    }
+
+    // HOC 必须使用 hoistNonReactStatic 将 WrappedComponent 的 static properties 复制过来
+    // 例如在 ReactNative 环境下，react-navigation 依赖 Component 的 static property 来决定导航栏的标题和样式，
+    // 如果不将原 Component 的这些内容复制过来，react-navigation 就会读取不到这些内容。
+
+    return hoistNonReactStatic(HOCComponent, WrappedComponent)
+}
+----
+

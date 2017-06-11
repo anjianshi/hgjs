@@ -1,3 +1,5 @@
+import hoistNonReactStatic from 'hoist-non-react-statics'
+
 /*
 通常情况下，如果我们要在 React 的 componentWillReceiveProps() 中调用 component 的一些方法来处理新接收到的 props，
 我们需要手动把新的 props 传给那个 component method，不然它通过 this.props 没有办法读取到它。
@@ -25,5 +27,6 @@ export function enhanceProps(Component) {
             if(this.componentDidReceiveProps) this.componentDidReceiveProps(prevProps)
         }
     }
-    return WithThroughProps
+
+    return hoistNonReactStatic(WithThroughProps, Component)
 }

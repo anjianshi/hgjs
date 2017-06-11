@@ -1,4 +1,5 @@
 import { BackHandler, Alert } from 'react-native'
+import hoistNonReactStatic from 'hoist-non-react-statics'
 
 
 /*
@@ -11,7 +12,7 @@ App 中有一些页面（主要是编辑类的）在进行离开页面的操作�
 此工具需搭配 react-navigation 使用
 */
 export function confirmGoBack(Component) {
-    return class ConfirmGoBack extends Component {
+    class ConfirmGoBack extends Component {
         static displayName = Component.displayName || Component.name
 
         componentWillMount() {
@@ -68,4 +69,5 @@ export function confirmGoBack(Component) {
             })
         }
     }
+    return hoistNonReactStatic(ConfirmGoBack, Component)
 }

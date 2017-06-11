@@ -1,4 +1,5 @@
 import React from 'react'
+import hoistNonReactStatic from 'hoist-non-react-statics'
 
 /*
 ReactNative only
@@ -18,7 +19,7 @@ https://facebook.github.io/react-native/docs/direct-manipulation.html
 见：https://github.com/facebook/react-native/issues/1040#issuecomment-96745870
 */
 export function emulateNative(Component) {
-    return class EmulateNative extends Component {
+    class EmulateNative extends Component {
         _emulateNativeRef = null
 
         setNativeProps = props => this._emulateNativeRef.setNativeProps(props)
@@ -29,4 +30,5 @@ export function emulateNative(Component) {
             return <element.type {...element.props} ref={r => this._emulateNativeRef = r} />
         }
     }
+    return hoistNonReactStatic(EmulateNative, Component)
 }

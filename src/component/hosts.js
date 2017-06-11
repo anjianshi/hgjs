@@ -1,3 +1,4 @@
+import hoistNonReactStatic from 'hoist-non-react-statics'
 import invariant from 'invariant'
 import { makePromiseHost, makeTimerHost } from 'hosts'
 
@@ -57,7 +58,8 @@ export function withPromiseHost(getKey=null, hostPromiseFunc=null) {
                 this.hostPromise.clear()
             }
         }
-        return PromiseHosted
+
+        return hoistNonReactStatic(PromiseHosted, Component)
     }
 }
 
@@ -106,7 +108,7 @@ export function withTimer(getKey=null) {
                 return this._timerHost.setDelayInterval(...args)
             }
         }
-        return WithTimer
+        return hoistNonReactStatic(WithTimer, Component)
     }
 }
 

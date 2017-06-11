@@ -1,5 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import hoistNonReactStatic from 'hoist-non-react-statics'
 import invariant from 'invariant'
 import { pickAs } from 'lang'
 import { getState, need, load } from './commonData'
@@ -52,5 +53,6 @@ export const withData = (...rawItems) => WrappedComponent => {
             return <WrappedComponent {...this.props} onDataLoaded={this.onLoaded} />
         }
     }
-    return CommonDataWrapper
+
+    return hoistNonReactStatic(CommonDataWrapper, WrappedComponent)
 }

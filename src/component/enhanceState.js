@@ -1,3 +1,5 @@
+import hoistNonReactStatic from 'hoist-non-react-statics'
+
 /*
 pending state
 batchedUpdates
@@ -89,7 +91,8 @@ export function enhanceState(Component) {
             }
         }
     }
-    return StateEnhanced
+
+    return hoistNonReactStatic(StateEnhanced, Component)
 }
 
 

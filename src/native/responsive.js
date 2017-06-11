@@ -4,6 +4,7 @@
 
 import React from 'react'
 import { Platform, Dimensions } from 'react-native'
+import hoistNonReactStatic from 'hoist-non-react-statics'
 import { emulateNative } from 'native/component/emulateNative'
 
 
@@ -107,9 +108,6 @@ responsive hoc
 export function responsive(Component) {
     @emulateNative
     class Responsive extends React.Component {
-        // 适配 react-navigation
-        static navigationOptions = Component.navigationOptions
-
         state = { windowData: getWindowData() }
 
         componentWillMount() {
@@ -126,5 +124,6 @@ export function responsive(Component) {
             return <Component windowData={this.state.windowData} {...this.props} />
         }
     }
-    return Responsive
+
+    return hoistNonReactStatic(Responsive, Component)
 }
