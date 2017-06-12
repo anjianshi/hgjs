@@ -1,18 +1,35 @@
+import { Promise as BluebirdPromise } from 'bluebird'
+
+
 /*
-对 bluebird 的 Promise 进行定制；以及一些 Promise 相关的工具。
+生成一个经过定制和扩展的 bluebird Promise 实例。
+（扩展了的内容见 initPromiseLib()）
 
-App 使用 Promise 时，建议从这里引入，而不是直接从 bluebird 处引入。
+这里新建了一个 Promise 实例，而不是直接对 bluebird 默认给出的实例进行扩展，
+因此使用者必须通过此类库而不是直接从 bluebird 处取得 Promise 实例，不然就无法获得经过配置和扩展的功能。
+
+这样设计是为了避免一会儿从此类库、一会儿从 bluebird 处引入 Promise 带来的混乱。
+因为以后维护代码时会搞不清楚这两者功能上是否有区别。
 */
+export const Promise = BluebirdPromise.getNewLibraryCopy()
+initPromiseLib(Promise)
 
-import { Promise } from 'bluebird'
-export { Promise }
+
+// =========================================
 
 
-function initPromiseLib(Promise) {
+/*
+对 bluebird Promise 实例进行配置
+
+cancellation: 是否开启 cancellation 功能（默认开启）
+*/
+function initPromiseLib(Promise, cancellation) {
+    if(cancellation === undefined) cancellation = true
+
     Promise.config({
-        warning: true,
-        longStackTraces: true,
-        cancellation: true
+        warning: process.env.NODE_ENV === 'development',
+        longStackTraces: process.env.NODE_ENV === 'development',
+        cancellation,
     })
 
     /*
@@ -28,15 +45,20 @@ function initPromiseLib(Promise) {
         if(error.message !== ABORT_MESSAGE) { throw error }
     }
 
-    /* 生成一个新的、独立的 Promise 类，并对其进行初始化 */
-    Promise.getNewInitedLibraryCopy = function() {
+    /*
+    生成一个新的、独立的 Promise 实例，并对其进行初始化
+
+    newCancellation: 新 Promise 实例是否开启 cancellation 功能。默认沿用原实例的配置
+    */
+    Promise.getNewInitedLibraryCopy = function(newCancellation) {
         const NewPromise = Promise.getNewLibraryCopy()
-        initPromiseLib(NewPromise)
+
+        if(newCancellation === undefined) newCancellation = cancellation
+        initPromiseLib(NewPromise, cancellation)
+
         return NewPromise
     }
 }
-
-initPromiseLib(Promise)
 
 
 // =========================================
@@ -48,8 +70,8 @@ JavaScript 原生的 Promise 是不支持的 cancel 的，
 
 因为我们现在使用的是支持 cancel 的 bluebird Promise，因此针对 async function 最好也能提供一种方便的中断机制。
 
-单纯地把 bluebird Promise 设置成 global Promise 对象是没意义的，
-这样虽然使得 async function 返回的 promise 对象有了 cancel() 方法，但是调用 cancel() 方法时，function 本身的执行并不会被终止。
+单纯地把 bluebird Promise 设置成 global Promise 能使 async function 返回的 promise 对象有了 cancel() 方法，
+但是调用 cancel() 方法时，function 本身的执行并不会被终止。
 
 通过使用下面提供的 cancellableAsync() 工具，可以更彻底地解决这个问题。
 
