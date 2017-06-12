@@ -21,16 +21,18 @@ initPromiseLib(Promise)
 /*
 对 bluebird Promise 实例进行配置
 
-cancellation: 是否开启 cancellation 功能（默认开启）
+config: 自定义 promise config
+extend: 是否为这个 Promise 添加扩展功能
 */
-function initPromiseLib(Promise, cancellation) {
-    if(cancellation === undefined) cancellation = true
-
+function initPromiseLib(Promise, config=null, extend=true) {
     Promise.config({
         warning: process.env.NODE_ENV === 'development',
         longStackTraces: process.env.NODE_ENV === 'development',
-        cancellation,
+        cancellation: true,
+        ...config
     })
+
+    if(!extend) return
 
     /*
     通过这两个方法实现提前退出一个 promise chain
@@ -50,12 +52,9 @@ function initPromiseLib(Promise, cancellation) {
 
     newCancellation: 新 Promise 实例是否开启 cancellation 功能。默认沿用原实例的配置
     */
-    Promise.getNewInitedLibraryCopy = function(newCancellation) {
+    Promise.getNewInitedLibraryCopy = function(...args) {
         const NewPromise = Promise.getNewLibraryCopy()
-
-        if(newCancellation === undefined) newCancellation = cancellation
-        initPromiseLib(NewPromise, cancellation)
-
+        initPromiseLib(NewPromise, ...args)
         return NewPromise
     }
 }
