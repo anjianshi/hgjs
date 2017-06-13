@@ -68,7 +68,7 @@ FormDefinition
                             表单提交时，会调用此回调，并把表单中各字段的值传给它
     submitWhenValid: bool   若为 ture，则每当表单进入合法状态时，就触发一次 submit
 
-SubmitResult: undefined | [FieldPath, ValidateResult][]
+SubmitResult: undefined | null | [FieldPath, ValidateResult][]
 
 FieldPath:  string[]
 
