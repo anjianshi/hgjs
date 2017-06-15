@@ -7,11 +7,14 @@ import { BaseInput } from './BaseInput'
 export class FieldInput extends React.Component {
     static propTypes = {
         field: PropTypes.object.isRequired,
-        widget: PropTypes.any,
+        // 若设为 true，则在按下回车时连带触发 form submit；
+        // 表单里只有一个 input 时，可以将此值设为 true；有多个 input 时，不应设为 true，不然用户填写完一个字段要去填下一个时，会因为按了回车而意外提交表单。
+        submit: PropTypes.bool,
+        widget: PropTypes.any,      // 实际渲染使用的 input widget
     }
 
     static defaultProps = {
-        // 实际渲染使用的 input widget
+        submit: false,
         widget: BaseInput
     }
 
@@ -37,7 +40,7 @@ export class FieldInput extends React.Component {
         在 Android 上，貌似即使 blurOnSubmit 为 true，在 submit 时 input 也不会真的 blur，也不会触发 onBlur 回调。
         https://github.com/facebook/react-native/issues/7047
         */
-        const { field, widget, ...extra } = this.props
+        const { field, submit, widget, ...extra } = this.props
         const Widget = widget
         const props = {
             value: field.props.value,
@@ -45,7 +48,7 @@ export class FieldInput extends React.Component {
             onChangeText: field.props.onChange,
             onSubmitEditing: () => {
                 field.props.onKeyPress({ charCode: 13 })
-                field.props.onSubmit()
+                if(submit) field.props.onSubmit()
             },
             onBlur: field.props.onBlur,
             ...extra
