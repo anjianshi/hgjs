@@ -1,24 +1,9 @@
 // 此工具的介绍和使用方法见 doc/commonData.adoc
+// 此工具需要搭配 reducerHost 使用
 
-/*
-在应用中，经常会有多个 component / 页面需要用到同一份数据的情况，
-通过此工具，可以实现对这些数据的“一次加载、多处使用”：一份数据只要被载入过一次，后面其他 component 或页面再使用它，就无需再次加载了。
-节省了加载时间。
-
-此工具需要搭配 reducerHost 使用。
-
-使用方法：
-先调用 init() 函数，进行初始化，并定义好所有支持载入的数据类型，
-然后在需要使用这些数据的地方，通过
-*/
 
 import { registerSimpleReducer } from 'store'
 import invariant from 'invariant'
-
-/*
-想法：其实应该不用再提供 get 和 pickAs 等函数，由使用者自行从 state 里提取即可。
-因为挂载点是使用者自己确定的。
-*/
 
 
 let getState, setState

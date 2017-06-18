@@ -49,8 +49,6 @@ function initPromiseLib(Promise, config=null, extend=true) {
 
     /*
     生成一个新的、独立的 Promise 实例，并对其进行初始化
-
-    newCancellation: 新 Promise 实例是否开启 cancellation 功能。默认沿用原实例的配置
     */
     Promise.getNewInitedLibraryCopy = function(...args) {
         const NewPromise = Promise.getNewLibraryCopy()
