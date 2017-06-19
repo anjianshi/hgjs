@@ -12,7 +12,7 @@
 
 == 使用方式
 
-=== 初始化，并定义好所有支持载入的数据类型
+=== 初始化，并定义好所有支持载入的数据项
 ```
 import * as commonData from 'commonData'
 commonData.init(...)
@@ -34,7 +34,7 @@ class Com extends React.Component {
 ```
 
 大部分情况下应该使用这种方式。 +
-注意， withData 是一个 HoC，不是 decorator。若要搭配其他 decorator 一起使用，必须像 connect() 一样，把它放到其他 decorator 之上。
+注意， withData 是一个 HOC，不是 decorator。若要搭配其他 decorator 一起使用，必须像 connect() 一样，把它放到其他 decorator 之上。
 
 
 方式2：通过 commonData.need() 或 commonData.load() 函数触发数据的载入，再通过 react-redux 的 connect 函数引入数据
@@ -60,8 +60,7 @@ class Com extends React.Component {
 }))
 ```
 
-通过 commonData.need() / load() 以及 withData 提供的 props.onDataLoaded() 都可以实现在数据载入完成时得到通知（触发指定回调），
-以完成后续操作（例如用得到的数据初始化 form）
+通过 commonData.need() / load() 以及 withData 提供的 props.onDataLoaded() 都可以实现在数据载入完成时得到通知（触发指定回调），以完成后续操作。
 免去了分别在 mount 和每次 receiveProps 时检查数据是否已经载入的麻烦
 （因为数据既有可能在 component mount 时已经载入，也有可能在 mount 后的某个时间点才载入）
 
@@ -75,15 +74,15 @@ class Com extends React.Component {
 commonData.load(name)
 ```
 
-如果希望由 component / 页面自己完成载入行为，而不再通过 commonData 里的 loader，可以使用 commonData.loading()
+如果希望由 component / 页面自己完成载入行为，而不再通过 commonData 里的 loader，可以像 commonData.load() 传递一个额外的 promise。
 ```
-commonData.loading(name, promise)
+commonData.load(name, promise)
 ```
 promise 最终应返回新的公共数据
 
-如果 component / 页面不需要进行异步载入，现在就已经有准备好了的新数据，可以调用 commonData.loaded() 来写入数据。
+如果 component / 页面不需要进行异步载入，现在就已经有准备好了的新数据，可以将它包装成一个 promise，然后调用 commonData.load() 来写入数据。
 ```
-commonData.loaded(name, data)
+commonData.load(name, Promise.resolve(data))
 ```
 
 更多技术细节，见具体代码中的注释
