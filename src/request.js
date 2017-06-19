@@ -57,10 +57,6 @@ export function makeRequest(url, options=null) {
                     response.parsedBody = body
                     resolve(response)
                 })
-
-                // 不知为何，如果使用者把 bluebird Promise 设置为了 global Promise，那么这里只要不返回个值就会触发 bluebird 的 warning
-                // http://bluebirdjs.com/docs/warning-explanations.html#warning-a-promise-was-created-in-a-handler-but-was-not-returned-from-it
-                return null
             })
             // HTTP 请求未完成或在解析 parsedBody 时出错（例如 JSON 不合法）
             .catch(reject)

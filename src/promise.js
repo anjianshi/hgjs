@@ -26,7 +26,7 @@ extend: 是否为这个 Promise 添加扩展功能
 */
 function initPromiseLib(Promise, config=null, extend=true) {
     Promise.config({
-        warning: process.env.NODE_ENV === 'development',
+        warnings: process.env.NODE_ENV === 'development' ? { wForgottenReturn: false } : false,
         longStackTraces: process.env.NODE_ENV === 'development',
         cancellation: true,
         ...config
