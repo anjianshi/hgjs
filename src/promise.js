@@ -62,6 +62,31 @@ function initPromiseLib(Promise, config=null, extend=true) {
 
 
 /*
+配置全局 Promise 运行环境
+*/
+export function initPromiseEnv(rejectionHandler=null) {
+    /*
+    用一个 bluebird Promise 代替全局默认提供的 Promise 实例，以获得更完善的报错信息。
+    这样一来，像 async await 等行为里意外出现的异常就也能获取到有意义的错误信息了。
+
+    不过除此之外，此 Promise 不应用做更多用途，因此 cancellation 及 hgjs 提供的扩展功能都被关闭。
+    若需要这些功能，还是应该手动引入 hgjs/promise
+    */
+    window.Promise = Promise.getNewInitedLibraryCopy({ cancellation: false }, false)
+
+    // 向全局和 hgjs Promise 统一注册一个 unhandled rejection 处理函数
+    // 以进行统一化的错误处理
+    if(rejectionHandler) {
+        window.Promise.onPossiblyUnhandledRejection(rejectionHandler)
+        Promise.onPossiblyUnhandledRejection(rejectionHandler)
+    }
+}
+
+
+// =========================================
+
+
+/*
 JavaScript 原生的 Promise 是不支持的 cancel 的，
 因此，基于原生 Promise 规范设计出来的 async function 也是一但执行，就没有什么机制能使其中途结束。
 
