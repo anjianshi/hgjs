@@ -95,7 +95,7 @@ controllingPromise 会调用 loader 来取得 loaderPromise，并监视 loaderPr
 若 loaderPromise 成功取得数据，则 controllingPromise 也 resolve，完成加载；
 若 loaderPromise 加载失败，则启动失败处理程序，等待用户触发重新加载，然后重新取得 loaderPromise 并重新加载。
 （但并不会重新建立一个 controllingPromise，而是会依然保持此 promise 的运行，直到数据最终加载成功）
-controllingPromise 既不会 reject 也不会被 cancel，一次载入行为一旦开始就不会被终止。
+controllingPromise 不会 reject；除非数据项被 clear，否则也不会被 cancel（也就是说，除非用户主动想要停止载入，否则一次载入行为一旦开始就不会因为任何原因被终止）
 
 若调用此函数时目标数据已经在载入过程中了（即已经有了一个正在运行的 controllingPromise），并不会重启加载行为，而是会继续沿用当前的 controllingPromise。
 
@@ -110,10 +110,20 @@ controllingPromise 既不会 reject 也不会被 cancel，一次载入行为一�
 */
 function load(name, loaderPromise=null) {
     if(!controllingPromises[name]) {
-        controllingPromises[name] = new Promise(resolve => {
+        controllingPromises[name] = new Promise((resolve, reject, onCancel) => {
             setState(`${name} loading`, { loading: {...getState().loading, [name]: true} })
 
+            let cancelled = false
+            onCancel(() => {
+                cancelled = true
+                delete controllingPromises[name]
+                setState(`${name} cancelled`, { loading: {...getState().loading, [name]: false} })
+            })
+
             function onResolve(data) {
+                // 在 controllingPromises 已被 cancel 的情况下，不再响应下级 loaderPromise 的 resolve 事件
+                if(cancelled) return
+
                 delete controllingPromises[name]
 
                 setState(`${name} loaded`, {
@@ -145,6 +155,12 @@ function makeClientPromise(controllingPromise) {
     return new Promise(resolve => controllingPromise.then(data => resolve(data)))
 }
 
+// 清除指定数据项；如果数据项有正在进行的加载行为，还会将此行为终止。
+// 注意：终止加载行为将使所有正在监听此数据加载过程的地方永远得不到结果。一定要确定此数据真的不再被需要了才调用此函数。
+function clear(name) {
+    if(controllingPromises[name]) controllingPromises[name].cancel()
+    setState({ [name]: null })
+}
 
 
 // ========== failed handling ==========
@@ -236,5 +252,6 @@ export {
     init,
     need,
     load,
+    clear,
     withData,
 }
