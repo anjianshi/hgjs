@@ -135,13 +135,12 @@ function load(name, loaderPromise=null) {
             }
 
             function waitingLoaderPromise(loaderPromise) {
-                loaderPromise
-                    .then(data => onResolve(data))
-                    .catch(() =>
-                        handlingFailed(
-                            () => waitingLoaderPromise(loaders[name]())
-                        )
+                loaderPromise.then(
+                    data => onResolve(data),
+                    () => handlingFailed(
+                        () => waitingLoaderPromise(loaders[name]())
                     )
+                )
             }
 
             waitingLoaderPromise(loaderPromise || loaders[name]())
