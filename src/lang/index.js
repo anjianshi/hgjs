@@ -8,6 +8,22 @@ export * from './shallowEqual'
 export * from './json'
 
 
+export function setImmediate(callback) {
+    if(window.setImmediate) {
+        return window.setImmediate(callback)
+    } else {
+        return setTimeout(callback)
+    }
+}
+
+export function clearImmediate(id) {
+    if(window.clearImmediate) {
+        return window.clearImmediate(id)
+    } else {
+        return clearTimeout(id)
+    }
+}
+
 /**
  * 返回 obj 所有 property 的名字，包括从父类中继承而来的、以及 Nonenumerable 的。
  * @param  {object}         obj
