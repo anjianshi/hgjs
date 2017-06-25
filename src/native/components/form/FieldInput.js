@@ -8,7 +8,11 @@ export class FieldInput extends React.Component {
     static propTypes = {
         field: PropTypes.object.isRequired,
         // 若设为 true，则在按下回车时连带触发 form submit；
-        // 表单里只有一个 input 时，可以将此值设为 true；有多个 input 时，不应设为 true，不然用户填写完一个字段要去填下一个时，会因为按了回车而意外提交表单。
+        // 表单里只有一个 input 时，可以将此值设为 true；
+        // 有多个 input 时，若这些 input 有明确的递进（前后）关系，如“用户名-密码”，肯定是先输用户名再输密码，
+        // 那么可以给最后一个 input 设置 submit=true，因为输完这个 input 就可以提交了；
+        // 如果各 input 间是平级的关系，例如联系方式表单里的电话号、微信号...，那么所有 input 都不应该设置 submit=true，
+        // 不然用户填完一个字段要去填另一个时，会因为按了回车而意外提交表单。
         submit: PropTypes.bool,
         widget: PropTypes.any,      // 实际渲染使用的 input widget
     }
