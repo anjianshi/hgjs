@@ -10,6 +10,11 @@ App 中有一些页面（主要是编辑类的）在进行离开页面的操作�
 此工具还能响应 Android 下的实体返回键，当用户按下返回键时，也会先进行确认，才决定是否要离开页面。
 
 此工具需搭配 react-navigation 使用
+
+使用了此工具的 view，必须保证不会再进一步进入其他页面，在操作完成时，只能 goBack() 返回上一页。
+因为在 StackNavigator 里，进入下一页时，上一页的 component 不会 unmount，此工具注册的 BackHandler listener 也就不会取消注册，
+那么用户在下一页里按返回键，就会误触发此页面的回调。
+目前还没有找到办法，能在 StackNavigator 里 stack 变换时收到回调通知，因此做不到在 stack 变换时移除／重新注册 listener。
 */
 export function confirmGoBack(Component) {
     class ConfirmGoBack extends Component {
