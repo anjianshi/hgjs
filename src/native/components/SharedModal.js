@@ -32,7 +32,8 @@ export class SharedModal extends React.Component {
 
     state = {
         ContentComponent: null,
-        contentProps: null
+        contentProps: null,
+        modalProps: null,
     }
 
     componentWillMount() {
