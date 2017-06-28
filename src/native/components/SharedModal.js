@@ -66,15 +66,15 @@ export class SharedModal extends React.Component {
     render() {
         const { ContentComponent, contentProps, modalProps } = this.state
 
+        if(!ContentComponent) return null
+
         // 不显示 modal 时，指定一个 onRequestClose 回调的占位符。不然 Android 下会出现警告
         // 显示 modal 时，仍要求使用者自行进行指定
         const preparedProps = !ContentComponent && { onRequestClose: () => {} }
 
-        return <Modal {...preparedProps} transparent animationType="fade" {...this.props} {...modalProps} visible={!!ContentComponent}>
+        return <Modal {...preparedProps} transparent {...this.props} {...modalProps}>
             <View style={s.bg}>
-                <If condition={ContentComponent}>
-                    <ContentComponent {...contentProps} />
-                </If>
+                <ContentComponent {...contentProps} />
             </View>
         </Modal>
     }
