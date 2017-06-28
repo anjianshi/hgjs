@@ -292,6 +292,15 @@ export class FormBiz {
         })
     }
 
+    // 调用此函数可以保证只在未进行提交的情况下触发提交；若已经在进行提交，则什么也不做
+    // 通常情况下，并不需要使用此函数，而应通过其他方式，例如禁用 input 和 button，来避免重复执行提交
+    // 如果所处的环境不方便对 input / button 进行禁用，则可以使用此函数
+    safeSubmit = () => {
+        if(!this.state.submitting) {
+            this.submit()
+        }
+    }
+
     submitted(result) {
         this.setState('submitted', { submitting: false })
 
@@ -361,7 +370,7 @@ export class FormBiz {
         // 之后注意观察，如果发现确实有影响，则改进此实现，对这类 object 进行 cache，使得 object 只被生成一次，以后都直接提取 cache。
         const formObj = {
             ...pick(this.state, ['status', 'submitting']),
-            ...pick(this, 'setValue', 'batchSetValues', 'submit'),
+            ...pick(this, 'setValue', 'batchSetValues', 'submit', 'safeSubmit'),
             props: this.form.eventHandlers,
 
             // 提醒使用者不要沿用老 Form 的 valid 属性
