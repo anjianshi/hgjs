@@ -1,4 +1,5 @@
 import { has, get, setWith, pickBy, isPlainObject, _flatMap } from 'lodash'
+import invariant from 'invariant'
 
 export * from './objectImmutable'
 export * from './iterable'
@@ -117,4 +118,24 @@ function _pickTo(source, fromPath, target, toPath) {
     if(has(source, fromPath)) {
         setWithObj(target, toPath, get(source, fromPath))
     }
+}
+
+
+// 将 value 限制在 min、max 范围内
+// 若 value 小于 min，返回 min；若 value 大于 max，返回 max；否则返回 value
+export function limit(min, value, max) {
+    invariant(min <= max, `min(${min})不应大于max(${max})`)
+    return Math.min(Math.max(min, value), max)
+}
+
+// 确保 value >= floor
+// 若 value 小于 floor，则返回 floor
+export function notLessThen(value, floor) {
+    return Math.max(value, floor)
+}
+
+// 确保 value <= ceil
+// 若 value 大于 ceil，返回 ceil
+export function notMoreThen(value, ceil) {
+    return Math.min(value, ceil)
 }
