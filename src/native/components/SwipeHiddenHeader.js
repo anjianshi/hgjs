@@ -11,6 +11,10 @@ import { limit, notLessThen } from 'lang'
 
 效果设计仿照 Twitter Android 客户端。
 暂时没有实现其“在滚动结束后 header 若只显示了一半，自动使其全部显示或完全隐藏”的功能。
+
+参考了以下资料：
+https://medium.com/appandflow/react-native-scrollview-animated-header-10a18cb9469e
+https://github.com/fengliu222/react-native-swipe-hidden-header
 */
 
 export class SwipeHiddenHeader extends React.Component {
