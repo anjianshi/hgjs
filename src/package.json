@@ -1,6 +1,6 @@
 {
     "name": "hgjs",
-    "version": "0.0.17",
+    "version": "0.0.19",
     "homepage": "https://github.com/anjianshi/hgjs",
     "license": "MIT",
     "author": "anjianshi <anjianshi@gmail.com>",
@@ -13,7 +13,7 @@
         "lodash": "^4.17.4",
         "prop-types": "^15.5.10",
         "react-redux": "^5.0.5",
-        "react": "^16.0.0-alpha.12",
+        "react": "16.0.0-alpha.12",
         "redux": "^3.7.1",
         "whatwg-fetch": "^2.0.3"
     }
