@@ -35,6 +35,7 @@ export class SharedModal extends React.Component {
         ContentComponent: null,
         contentProps: null,
         modalProps: null,
+        withBg: null,
     }
 
     componentWillMount() {
@@ -46,13 +47,17 @@ export class SharedModal extends React.Component {
         instance = null
     }
 
-    open = (ContentComponent, contentProps, modalProps) => {
+    /*
+    withBg: 若为 true（默认），modal 自带一个黑色半透明 overlay。如果想自定义 overlay 样式，可以将其设为 false。
+    */
+    open = (ContentComponent, contentProps, modalProps, withBg=true) => {
         invariant(!this.state.ContentComponent, 'SharedModal: modal 已经处于开启状态，不支持同时开启多个 modal')
 
         this.setState({
             ContentComponent,
             contentProps,
             modalProps,
+            withBg
         })
     }
 
@@ -61,11 +66,12 @@ export class SharedModal extends React.Component {
             ContentComponent: null,
             contentProps: null,
             modalProps: null,
+            withBg: null
         })
     }
 
     render() {
-        const { ContentComponent, contentProps, modalProps } = this.state
+        const { ContentComponent, contentProps, modalProps, withBg } = this.state
 
         if(!ContentComponent) return null
 
@@ -73,10 +79,19 @@ export class SharedModal extends React.Component {
         // 显示 modal 时，仍要求使用者自行进行指定
         const preparedProps = !ContentComponent && { onRequestClose: () => {} }
 
-        return <Modal {...preparedProps} transparent {...this.props} {...modalProps}>
-            <View style={s.bg}>
-                <ContentComponent {...contentProps} />
-            </View>
+        const supportedOrientations = ['portrait', 'portrait-upside-down', 'landscape', 'landscape-left', 'landscape-right']
+
+        return <Modal {...preparedProps} transparent supportedOrientations={supportedOrientations} {...this.props} {...modalProps}>
+            <Choose>
+                <When condition={withBg}>
+                    <View style={s.bg}>
+                        <ContentComponent {...contentProps} />
+                    </View>
+                </When>
+                <Otherwise>
+                    <ContentComponent {...contentProps} />
+                </Otherwise>
+            </Choose>
         </Modal>
     }
 }
