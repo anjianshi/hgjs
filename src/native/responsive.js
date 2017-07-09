@@ -104,13 +104,6 @@ Dimensions.addEventListener('change', () => {
 })
 
 
-export function responsiveStyleSheet(factory) {
-
-}
-
-
-
-
 /*
 responsive hoc
 用此 hoc 包裹 component，以使其能在窗口尺寸变化时重新渲染
