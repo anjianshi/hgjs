@@ -87,7 +87,8 @@ function need(name) {
 
 /*
 执行数据载入，并返回一个会在载入完成时 resolve 的 promise（称之为 clientPromise，详见下面说明）
-若数据已存在，则会重新载入（新数据载入完成前，老数据依然存在）
+若数据已存在，则会重新载入
+（若 reset 参数为 false，则新数据载入完成前，老数据依然存在；否则会先清除老数据）
 
 = 数据载入流程
 开始载入数据时，会生成一个 controllingPromise，它的生命周期完全对应于一次从开始到结束的载入行为。
@@ -108,7 +109,9 @@ controllingPromise 不会 reject；除非数据项被 clear，否则也不会被
 如果当前已经开始载入流程了，那么此参数会被忽略。
 另外，此参数只在初次尝试载入时有效；若载入失败并重新开始载入，则还是会使用 loader 返回的 promise。
 */
-function load(name, loaderPromise=null) {
+function load(name, loaderPromise=null, reset=false) {
+    if(reset) clear(name, false)
+
     if(!controllingPromises[name]) {
         controllingPromises[name] = new Promise((resolve, reject, onCancel) => {
             setState(`${name} loading`, { loading: {...getState().loading, [name]: true} })
@@ -154,10 +157,11 @@ function makeClientPromise(controllingPromise) {
     return new Promise(resolve => controllingPromise.then(data => resolve(data)))
 }
 
-// 清除指定数据项；如果数据项有正在进行的加载行为，还会将此行为终止。
+// 清除指定数据项
+// 若 stopLoading 为 true，则如果数据项有正在进行的加载行为，还会将此行为终止。
 // 注意：终止加载行为将使所有正在监听此数据加载过程的地方永远得不到结果。一定要确定此数据真的不再被需要了才调用此函数。
-function clear(name) {
-    if(controllingPromises[name]) controllingPromises[name].cancel()
+function clear(name, stopLoading=true) {
+    if(stopLoading && controllingPromises[name]) controllingPromises[name].cancel()
     setState({ [name]: null })
 }
 
@@ -225,7 +229,7 @@ const withData = (...rawItems) => WrappedComponent => {
         componentWillMount() {
             for(const [dataName, forceReload] of items.entries()) {
                 if(forceReload) {
-                    load(dataName)
+                    load(dataName, null, true)
                 } else {
                     need(dataName)
                 }
