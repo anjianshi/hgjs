@@ -58,6 +58,10 @@ responsiveObject
 
 虽然此 object 的内容能实时更新，但如果 component 不重新渲染，它还是无法利用上新生成的内容，因此大部分情况下应搭配 responsive hoc 使用。
 
+注意：不要把此工具生成的 object 直接传入 component 的 style 属性。因为 react-native 会在一些情况下（如旋转设备）将传入 style 的 object 给 fronze，
+导致后续无法继续对 object 进行更新。
+
+
 生成动态 StyleSheet 的例子
 responsiveObject(win => StyleSheet.create({
     mainView: {
@@ -98,6 +102,13 @@ Dimensions.addEventListener('change', () => {
         Object.assign(item.object, newObj)
     }
 })
+
+
+export function responsiveStyleSheet(factory) {
+
+}
+
+
 
 
 /*

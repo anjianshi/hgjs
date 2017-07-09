@@ -16,6 +16,7 @@ hgjs 以及 app 代码中的很多工具／组件都要用到 <Modal>。使用�
 let instance = null
 
 
+// 参数格式见 SharedModal.open()
 export function openModal(...args) {
     invariant(instance, 'SharedModal: instance 不存在，请检查 <SharedModal> 是否正常挂载')
     instance.open(...args)
