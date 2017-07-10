@@ -1,7 +1,8 @@
 import React from 'react'
-import { Modal, StyleSheet, View } from 'react-native'
+import PropTypes from 'prop-types'
+import { Platform, Modal, View, StyleSheet } from 'react-native'
 import invariant from 'invariant'
-
+import { iterSkip } from 'lang'
 
 /*
 hgjs 以及 app 代码中的很多工具／组件都要用到 <Modal>。使用者每次使用它们时，都要在页面里额外挂载一个 <Modal>，比较麻烦。
@@ -9,100 +10,98 @@ hgjs 以及 app 代码中的很多工具／组件都要用到 <Modal>。使用�
 并提供函数接口，方便 modal 的开启和关闭。
 
 使用方式：
-在 app 里挂载此 <SharedModal/> component，然后所有依赖此 component 的工具／组件就都可以工作了。
+在 app 里挂载此 <SharedModalRoot/> component，然后所有依赖此 component 的工具／组件就都可以工作了。
+
+此工具支持同时开启多个 modal，关闭时，会从后往前依次关闭
 */
 
 
-let instance = null
+let modalRoot = null
 
 
-// 参数格式见 SharedModal.open()
+// 见 SharedModalRoot.open()
 export function openModal(...args) {
-    invariant(instance, 'SharedModal: instance 不存在，请检查 <SharedModal> 是否正常挂载')
-    instance.open(...args)
+    invariant(modalRoot, 'SharedModal: modalRoot 不存在，请检查 <SharedModalRoot> 是否正常挂载')
+    modalRoot.open(...args)
 }
 
+// 见 SharedModalRoot.close()
 export function closeModal() {
-    invariant(instance, 'SharedModal: instance 不存在，请检查 <SharedModal> 是否正常挂载')
-    instance.close()
+    invariant(modalRoot, 'SharedModal: modalRoot 不存在，请检查 <SharedModalRoot> 是否正常挂载')
+    modalRoot.close()
 }
 
 
-export class SharedModal extends React.Component {
-    // props 均会传给 <Modal>
-
+export class SharedModalRoot extends React.Component {
     state = {
-        ContentComponent: null,
-        contentProps: null,
-        modalProps: null,
-        withBg: null,
+        modals: [],   // [ config, ... ]
     }
 
     componentWillMount() {
-        invariant(!instance, 'SharedModal: instance 已存在，请检查 <SharedModal> 是否重复挂载')
-        instance = this
+        invariant(!modalRoot, 'SharedModal: 错误，请检查 <SharedModalRoot> 是否重复挂载')
+        modalRoot = this
     }
 
     componentWillUnmount() {
-        instance = null
+        modalRoot = null
     }
 
     /*
-    withBg: 若为 true（默认），modal 自带一个黑色半透明 overlay。如果想自定义 overlay 样式，可以将其设为 false。
-    */
-    open = (ContentComponent, contentProps, modalProps, withBg=true) => {
-        invariant(!this.state.ContentComponent, 'SharedModal: modal 已经处于开启状态，不支持同时开启多个 modal')
+    开启一个新 modal
 
+    withOverlay: 若为 true（默认），modal 自带一个黑色半透明 overlay。如果想自定义 overlay 样式，可以将其设为 false。
+    */
+    open = (ContentComponent, contentProps=null, modalProps=null, withOverlay=true) => {
+        const config = { ContentComponent, contentProps, modalProps, withOverlay }
         this.setState({
-            ContentComponent,
-            contentProps,
-            modalProps,
-            withBg
+            modals: [...this.state.modals, config]
         })
     }
 
+    // 关闭最后一个开启的 modal
     close = () => {
-        this.setState({
-            ContentComponent: null,
-            contentProps: null,
-            modalProps: null,
-            withBg: null
-        })
+        const modals = [...this.state.modals]
+        modals.pop()
+        this.setState({ modals })
     }
 
     render() {
-        const { ContentComponent, contentProps, modalProps, withBg } = this.state
+        const { modals } = this.state
+        return modals.length ? <ModalNode {...this.props} restModals={modals} /> : null
+    }
+}
 
-        if(!ContentComponent) return null
+class ModalNode extends React.Component {
+    static propTypes = {
+        restModals: PropTypes.array,
+    }
 
-        // 不显示 modal 时，指定一个 onRequestClose 回调的占位符。不然 Android 下会出现警告
-        // 显示 modal 时，仍要求使用者自行进行指定
-        const preparedProps = !ContentComponent && { onRequestClose: () => {} }
+    render() {
+        const { restModals, ...extraProps } = this.props
+        const nextRestModals = iterSkip(restModals, 1)
+        const { ContentComponent, contentProps, modalProps, withOverlay } = restModals[0]
 
         const supportedOrientations = ['portrait', 'portrait-upside-down', 'landscape', 'landscape-left', 'landscape-right']
+        return <Modal transparent supportedOrientations={supportedOrientations} {...extraProps} {...modalProps}>
+            <View style={[s.bg, withOverlay && s.overlayBg]}>
+                <ContentComponent {...contentProps} />
 
-        return <Modal {...preparedProps} transparent supportedOrientations={supportedOrientations} {...this.props} {...modalProps}>
-            <Choose>
-                <When condition={withBg}>
-                    <View style={s.bg}>
-                        <ContentComponent {...contentProps} />
-                    </View>
-                </When>
-                <Otherwise>
-                    <ContentComponent {...contentProps} />
-                </Otherwise>
-            </Choose>
+                <If condition={nextRestModals.length}>
+                    <ModalNode {...extraProps} restModals={nextRestModals} />
+                </If>
+            </View>
         </Modal>
     }
 }
 
 
-
-const modalOverlay = 'rgba(20,20,20,0.5)'
+const modalOverlay = Platform.OS === 'android' ? '#00000099' : '#00000066'
 
 const s = StyleSheet.create({
     bg: {
-        backgroundColor: modalOverlay,
         flex: 1,
+    },
+    overlayBg: {
+        backgroundColor: modalOverlay,
     }
 })
