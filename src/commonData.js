@@ -197,12 +197,17 @@ function handlingFailed(callback) {
 
 // ========== component helper ==========
 
+const modes = { need: '_need', refresh: '_refresh', reset: '_reset' }
+
 /*
 item 格式：
 {
     data: string,         commonData init() 里定义的 data name
     prop: string,         （可选）此 data 传给 component 时使用的 prop name，默认和 data name 一样
-    forceReload: bool     （可选，默认为 false）若指定为 true，则每次使用时都重新加载数据
+    mode: string,         （可选）
+        need      （默认）若数据不存在，触发加载；若已存在，直接使用此数据。
+        refresh   每次使用时都重新加载数据。但在新数据加载完成前，老数据依然可用。
+        reset     每次使用时都清除当前数据并重新加载。
 }
 或
 string         也可以指定一个字符串作为 data 值，其他各项均使用默认值。
@@ -211,15 +216,16 @@ string         也可以指定一个字符串作为 data 值，其他各项均�
 它和 commonData need() / load() 效果类似，都是在指定数据项载入完成时，调用回调，并将数据传给它。
 */
 const withData = (...rawItems) => WrappedComponent => {
-    const items = new Map()     // dataName => forceReload
+    const items = new Map()     // dataName => mode
     const propAliases = {}      // dataName: propName
 
     for(const item of rawItems) {
         if(typeof item === 'string') {
-            items.set(item, false)
+            items.set(item, modes.need)
             propAliases[item] = item
         } else {
-            items.set(item.data, item.forceReload || false)
+            invariant(!item.mode || modes[item.mode], `commonData.withData: item mode 不合法（got: ${item.mode}）`)
+            items.set(item.data, modes[item.mode || 'need'])
             propAliases[item.data] = item.props || item.data
         }
     }
@@ -227,11 +233,11 @@ const withData = (...rawItems) => WrappedComponent => {
     @connect(() => pickAs(getState(), propAliases))
     class CommonDataWrapper extends React.Component {
         componentWillMount() {
-            for(const [dataName, forceReload] of items.entries()) {
-                if(forceReload) {
-                    load(dataName, null, true)
-                } else {
+            for(const [dataName, mode] of items.entries()) {
+                if(mode === modes.need) {
                     need(dataName)
+                } else {
+                    load(dataName, null, mode === modes.reset)
                 }
             }
         }
