@@ -116,11 +116,18 @@ class ScrollContent extends React.PureComponent {
         children: PropTypes.element.isRequired,
     }
 
+    onScroll = (e) => {
+        this.props.onScroll(e)
+        if(this.props.children.props.onScroll) {
+            this.props.children.props.onScroll(e)
+        }
+    }
+
     render() {
-        const { headerHeight, atTop, onScroll, children } = this.props
+        const { headerHeight, atTop, children } = this.props
 
         const scrollProps = {
-            onScroll,
+            onScroll: this.onScroll,
             scrollEventThrottle: 16,
         }
 
