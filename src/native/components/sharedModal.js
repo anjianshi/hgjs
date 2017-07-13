@@ -47,14 +47,14 @@ export class Root extends React.Component {
     开启一个新 modal
 
     config:
-        component       modal 内容。以 compoent 的形式提供
-        contentProps    要传给 content component 的 props
-        modalProps      要传给 react-native <Modal> 的 props
-                        可以通过在挂载 <SharedModalRoot> 时向其指定一些 props，来指定对所有 modal 都有效的全局 modalProps
-        onCancel        在 Android 下触发 onRequestClose 时，会调用此回调。
-                        通过渲染此模块提供的 <Overlay> component，还可以实现在用户点击 overlay 时也触发此回调。详见 <Overlay> 的说明。
-                        未指定此回调时，默认行为是关闭 modal。使用者可以手动指定此属性为 falsy 值或空函数来禁用此默认行为。
-                        因为提供了此回调，使用者不必也不支持额外指定 onRequestClose 了。
+        ContentComponent    modal 内容。以 compoent 的形式提供
+        contentProps        要传给 ContentComponent 的 props
+        modalProps          要传给 react-native <Modal> 的 props
+                            可以通过在挂载 <SharedModalRoot> 时向其指定一些 props，来指定对所有 modal 都有效的全局 modalProps
+        onCancel            在 Android 下触发 onRequestClose 时，会调用此回调。
+                            通过渲染此模块提供的 <Overlay> component，还可以实现在用户点击 overlay 时也触发此回调。详见 <Overlay> 的说明。
+                            未指定此回调时，默认行为是关闭 modal。使用者可以手动指定此属性为 falsy 值或空函数来禁用此默认行为。
+                            因为提供了此回调，使用者不必也不支持额外指定 onRequestClose 了。
     */
     open = (config) => {
         config = {
@@ -100,7 +100,7 @@ class ModalNode extends React.Component {
     render() {
         const { restModals, ...gloalModalProps } = this.props
         const nextRestModals = iterSkip(restModals, 1)
-        const { component, contentProps, modalProps, onCancel } = restModals[0]
+        const { ContentComponent, contentProps, modalProps, onCancel } = restModals[0]
 
         const realModalProps = {
             transparent: true,
@@ -109,8 +109,6 @@ class ModalNode extends React.Component {
             ...modalProps,
             onRequestClose: onCancel || (() => {})
         }
-
-        const ContentComponent = component
 
         return <Modal {...realModalProps}>
             <ContentComponent {...contentProps} />
