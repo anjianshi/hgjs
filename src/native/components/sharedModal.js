@@ -1,8 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Platform, Modal, View, StyleSheet, TouchableWithoutFeedback } from 'react-native'
+import { Platform, View, StyleSheet, TouchableWithoutFeedback } from 'react-native'
 import invariant from 'invariant'
 import { iterSkip } from 'lang'
+import { TouchFixedModal } from './TouchFixedModal'
 
 /*
 hgjs 以及 app 代码中的很多工具／组件都要用到 <Modal>。使用者每次使用它们时，都要在页面里额外挂载一个 <Modal>，比较麻烦。
@@ -110,13 +111,13 @@ class ModalNode extends React.Component {
             onRequestClose: onCancel || (() => {})
         }
 
-        return <Modal {...realModalProps}>
+        return <TouchFixedModal {...realModalProps}>
             <ContentComponent {...contentProps} />
 
             <If condition={nextRestModals.length}>
                 <ModalNode {...gloalModalProps} restModals={nextRestModals} />
             </If>
-        </Modal>
+        </TouchFixedModal>
     }
 }
 
