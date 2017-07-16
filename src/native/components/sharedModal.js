@@ -135,10 +135,10 @@ class ModalNode extends React.Component {
 
 2. 嵌套渲染
 <Overlay>
-    {modal content}
+    <View>{modal content}</View>
 </Overlay>
 
-嵌套渲染时 modal content 的顶层*必须*是一个 <View>，不然会影响对触摸事件对处理（导致触摸 modal content 内部也会触发 overlay 的 onCancel）
+嵌套渲染时 modal content 的顶层*必须*是一个 <View>，不然无法正确处理触摸事件，会导致触摸 modal content 内部也会触发 overlay 的 onCancel
 此外，modal content 不要无谓地扩大空间，例如占满整个屏幕，这会使得 overlay 被挡住，无法触发 onCancel 事件。
 */
 export class Overlay extends React.Component {
@@ -151,18 +151,26 @@ export class Overlay extends React.Component {
         sharedModalOnCancel: PropTypes.func
     }
 
+    contentPreventTouchEvent(e) {
+        // 阻断 touch event，使其不再向上（即向 overlay）传递
+        e.stopPropagation()
+        return false
+    }
+
     render() {
         return <TouchableWithoutFeedback onPress={this.context.sharedModalOnCancel}>
             <View style={[s.overlay, this.props.style]}>
-                <If condition={this.props.children}>
-                    <TouchableWithoutFeedback onPress={() => {}}>
-                        {this.props.children}
-                    </TouchableWithoutFeedback>
-                </If>
+                <If condition={this.props.children}>{
+                    React.cloneElement(this.props.children, {
+                        onStartShouldSetResponder: this.contentPreventTouchEvent,
+                        onMoveShouldSetResponder: this.contentPreventTouchEvent,
+                    })
+                }</If>
             </View>
         </TouchableWithoutFeedback>
     }
 }
+
 
 
 export const overlayColor = Platform.OS === 'android' ? '#00000099' : '#00000066'
