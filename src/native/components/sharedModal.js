@@ -52,10 +52,15 @@ export class Root extends React.Component {
         contentProps        要传给 ContentComponent 的 props
         modalProps          要传给 react-native <Modal> 的 props
                             可以通过在挂载 <SharedModalRoot> 时向其指定一些 props，来指定对所有 modal 都有效的全局 modalProps
-        onCancel            在 Android 下触发 onRequestClose 时，会调用此回调。
-                            通过渲染此模块提供的 <Overlay> component，还可以实现在用户点击 overlay 时也触发此回调。详见 <Overlay> 的说明。
-                            未指定此回调时，默认行为是关闭 modal。使用者可以手动指定此属性为 falsy 值或空函数来禁用此默认行为。
-                            因为提供了此回调，使用者不必也不支持额外指定 onRequestClose 了。
+        onCancel
+            在 Android 下触发 onRequestClose 时，会调用此回调。
+            通过渲染此模块提供的 <Overlay> component，还可以实现在用户点击 overlay 时也触发此回调。详见 <Overlay> 的说明。
+            未指定此回调时，默认行为是关闭 modal。使用者可以手动指定此属性为 falsy 值或空函数来禁用此默认行为。
+            因为提供了此回调，使用者不必也不支持额外指定 onRequestClose 了。
+
+            此工具还会在渲染 ContentComponent 时，额外传入一个 sharedModalOnCancel props，
+            格式是： sharedModalOnCancel={(newOnCancel) => {...}}
+            使用者也可以在 ContentComponent 里调用此 props 来指定 onCancel 回调。
     */
     open = (config) => {
         config = {
@@ -91,28 +96,37 @@ class ModalNode extends React.Component {
     }
 
     static childContextTypes = {
-        sharedModalOnCancel: PropTypes.func,
+        sharedModalOnCancel: PropTypes.any,
     }
 
     getChildContext() {
-        return { sharedModalOnCancel: this.props.restModals[0].onCancel }
+        return { sharedModalOnCancel: this.onCancel }
     }
+
+    get config() { return this.props.restModals[0] }
+
+    onCancel = () => {
+        const onCancel = this._settedOnCancel || this.config.onCancel
+        if(onCancel) onCancel()
+    }
+    _settedOnCancel = null
+    setOnCancel = newOnCancel => this._settedOnCancel = newOnCancel
 
     render() {
         const { restModals, ...gloalModalProps } = this.props
         const nextRestModals = iterSkip(restModals, 1)
-        const { ContentComponent, contentProps, modalProps, onCancel } = restModals[0]
+        const { ContentComponent, contentProps, modalProps } = this.config
 
         const realModalProps = {
             transparent: true,
             supportedOrientations: ['portrait', 'portrait-upside-down', 'landscape', 'landscape-left', 'landscape-right'],
             ...gloalModalProps,
             ...modalProps,
-            onRequestClose: onCancel || (() => {})
+            onRequestClose: this.onCancel
         }
 
         return <TouchFixedModal {...realModalProps}>
-            <ContentComponent {...contentProps} />
+            <ContentComponent {...contentProps} sharedModalOnCancel={this.setOnCancel} />
 
             <If condition={nextRestModals.length}>
                 <ModalNode {...gloalModalProps} restModals={nextRestModals} />
@@ -148,7 +162,7 @@ export class Overlay extends React.Component {
     }
 
     static contextTypes = {
-        sharedModalOnCancel: PropTypes.func
+        sharedModalOnCancel: PropTypes.any
     }
 
     contentPreventTouchEvent(e) {
