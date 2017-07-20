@@ -50,7 +50,7 @@ export class ImageSlide extends React.Component {
                 getRef={r => this.slider = r}
                 data={data} renderItem={renderItem} initialIndex={initialIndex} onSlide={this.onSlide} />
 
-            <If condition={showNumber && data.length}>
+            <If condition={showNumber && data.length > 1}>
                 <View style={[s.count, data.length >= 10 ? s.countLarge : s.countSmall]}>
                     <Text style={s.countText}>
                         {currIndex + 1}/{data.length}
@@ -85,11 +85,16 @@ class Slider extends React.PureComponent {
         onSlide: PropTypes.func.isRequired,     // (newIndex) =>
     }
 
+    componentWillMount() {
+        this.wrapData(this.props)
+    }
+
     componentDidMount() {
         this.scrollToInitialIndex()
     }
 
     componentWillReceiveProps(nextProps) {
+        this.wrapData(nextProps)
         this.detectFixScrollOffset(nextProps)
         this.detectResetScrollOffset(nextProps)
     }
@@ -99,6 +104,21 @@ class Slider extends React.PureComponent {
     }
 
     get winWidth() { return this.props.windowData.width }
+
+    // data 长度大于 1 时，在末尾额外添加一个元素，以实现图片的循环转动。
+    //
+    // 因为渲染操作会有预渲染等问题，所以不能放到渲染时跳转，而是要在 slide 事件发生时渲染。
+    // 因此这个额外添加的值也要能渲染出一个临时结果
+    data = null
+    // FlatList 不允许在 data 里出现 falsy 值，因此用这个值代替。
+    _tailItem = 'ImageSlideTailItem'
+    wrapData = (nextProps) => {
+        if(this.data !== null && nextProps.data === this.props.data) return
+
+        const origData = nextProps.data
+        this.data = origData.length > 1 ? [...origData, this._tailItem] : origData
+    }
+
 
     slideTo = (index, animated=false) => {
         this.list.scrollToOffset({
@@ -112,7 +132,13 @@ class Slider extends React.PureComponent {
         const x = e.nativeEvent.contentOffset.x
         if(x % this.winWidth === 0) {
             this.currIndex = x / this.winWidth
-            this.props.onSlide(this.currIndex)
+
+            if(this.data.indexOf(this._tailItem) === this.currIndex) {
+                // 翻到 tail item 时，跳转回第一个 item
+                this.slideTo(0)
+            } else {
+                this.props.onSlide(this.currIndex)
+            }
         }
     }
 
@@ -153,6 +179,9 @@ class Slider extends React.PureComponent {
 
     getKey = (item, index) => `${index}-${item}`    // 因为可能有同一个图片出现多次的情况，所以要把 index 也加到 key 里，以免 key 重复
     renderEmpty = () => this.props.renderItem({ item: null, index: 0 })
+    renderItem = info => info.item === this._tailItem
+        ? <View style={s.tailItem} />
+        : this.props.renderItem(info)
 
     getItemLayout = (data, index) => ({
          length: this.winWidth, offset: this.winWidth * index, index: index
@@ -166,19 +195,19 @@ class Slider extends React.PureComponent {
             scrollEventThrottle={512}  // 设一下这个 props，省得 Xcode 总是冒出相关 notice
 
             // 指定 winWidth 为 extraData，以确保横竖屏切换时 item 能重新渲染
-            data={this.props.data} extraData={this.winWidth} keyExtractor={this.getKey}
+            data={this.data} extraData={this.winWidth} keyExtractor={this.getKey}
             // 这几个 props 确保了后续只有一个图片会进行预渲染
             initialNumToRender={1} maxToRenderPerBatch={1} windowSize={2}
             // 设置了上面几个 props 的情况下，若不实现 getItemLayout，在横竖屏转换时会无法正确修正 scroll offset
             // 估计是因为不实现此方法的话，在进行修正时 FlatList 就还没来得及计算好 element 宽度。（例如设置一个长点的 timeout，就能正确修正了）
             getItemLayout={this.getItemLayout}
-            renderItem={this.props.renderItem} ListEmptyComponent={this.renderEmpty}
+            renderItem={this.renderItem} ListEmptyComponent={this.renderEmpty}
         />
     }
 }
 
 
-const s = responsiveObject(() => StyleSheet.create({
+const s = responsiveObject(win => StyleSheet.create({
     imagesWrap: {
         flexDirection: 'row',
     },
@@ -203,5 +232,9 @@ const s = responsiveObject(() => StyleSheet.create({
     countText: {
         color: 'white',
         fontSize: 11,
+    },
+    tailItem: {
+        width: win.width,
+        height: 1,
     }
 }))
