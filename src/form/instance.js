@@ -365,12 +365,12 @@ export class FormBiz {
     }
 
     // 生成一个供使用者使用的 object，里面整合了 form instance 和 form state 信息
-    getFormObj() {
+    getFormObj = () => {
         // 目前的实现里，每次调用此函数，部分 object 都会重新生成，例如 form.props，这有可能潜在地影响性能。
         // 之后注意观察，如果发现确实有影响，则改进此实现，对这类 object 进行 cache，使得 object 只被生成一次，以后都直接提取 cache。
         const formObj = {
             ...pick(this.state, ['status', 'submitting']),
-            ...pick(this, 'setValue', 'batchSetValues', 'submit', 'safeSubmit'),
+            ...pick(this, 'setValue', 'batchSetValues', 'submit', 'safeSubmit', 'getFormObj'),
             props: this.form.eventHandlers,
 
             // 提醒使用者不要沿用老 Form 的 valid 属性
